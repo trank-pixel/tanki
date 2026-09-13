@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..25" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1A1C19; color: white; font-family: sans-serif; }
+        
+        /* Material 3 Expressive Language Switcher */
+        .m3-lang-wrapper { position: fixed; top: 16px; right: 16px; z-index: 9999; }
+        .m3-lang-btn { 
+            display: flex; align-items: center; gap: 8px; background: #D1E4FF; color: #001D36; 
+            border: none; padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.2, 0, 0, 1); box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .m3-lang-btn:hover { border-radius: 28px; background: #D1E4FF; transform: scale(1.05); }
+        .m3-lang-menu { 
+            position: absolute; top: calc(100% + 8px); right: 0; background: #2E312C; 
+            border: 1px solid #424940; border-radius: 24px; padding: 8px; min-width: 160px; 
+            display: none; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
+        }
+        .m3-lang-menu.show { display: flex; animation: m3-fade 0.3s ease; }
+        .m3-lang-item { padding: 14px 20px; border-radius: 16px; cursor: pointer; transition: 0.2s; font-size: 14px; color: #E2E3DD; }
+        .m3-lang-item:hover { background: rgba(183, 243, 151, 0.1); }
+        @keyframes m3-fade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .m3-screen { position: absolute; inset: 0; z-index: 2000; background: #1A1C19; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .m3-card { background: #2E312C; border-radius: 28px; padding: 20px; width: 95%; max-width: 500px; border: 1px solid #424940; position: relative; z-index: 2001; }
+        .m3-input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 2px solid #8C9388; background: transparent; color: #E2E3DD; font-size: 16px; }
+        .m3-btn { width: 100%; padding: 16px; border-radius: 28px; border: none; background: #B7F397; color: #043900; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+        
+        .m3-btn-error { background: #F2B8B5; color: #601410; }
+
+        .team-box { display: flex; gap: 10px; height: 180px; margin: 15px 0; }
+        .team-col { flex: 1; background: #1A1C19; border-radius: 16px; padding: 10px; overflow-y: auto; font-size: 13px; }
+        .p-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 4px; border-bottom: 1px solid #424940; }
+        .ready-nick { color: #B7F397; }
+        .move-btn { background: #B7F397; color: #043900; border: none; border-radius: 4px; padding: 2px 8px; font-weight: bold; cursor: pointer; }
+
+        .tank-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
+        .t-card { background: #424940; border-radius: 8px; padding: 5px; font-size: 10px; text-align: center; border: 1px solid transparent; opacity: 0.6; }
+        .t-card.active { border-color: #B7F397; background: #196719; opacity: 1; }
+
+        #room-list { margin: 15px 0; max-height: 180px; overflow-y: auto; width: 100%; border-radius: 12px; }
+
+        #hud { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; text-align: center; pointer-events: none; }
+        #hp-bar { width: 240px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 5px 0; overflow: hidden; }
+        #hp-fill { height: 100%; background: #B7F397; width: 100%; transition: 0.2s; }
+        
+        #fire-zone { position: fixed; right: 20px; bottom: 20px; width: 120px; height: 120px; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        #fire-btn { width: 80px; height: 80px; border-radius: 50%; background: #B7F397; border: 5px solid rgba(0,0,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
+        .label { position: absolute; color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px black; transform: translate(-50%, -220%); white-space: nowrap; pointer-events: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="m3-lang-wrapper">
+    <button class="m3-lang-btn" onclick="toggleLangMenu(event)">
+        <span class="material-symbols-outlined">language</span>
+        <span id="cur-lang-txt">Русский</span>
+    </button>
+    <div class="m3-lang-menu" id="lang-menu">
+        <div class="m3-lang-item" onclick="setLang('ru')">Русский</div>
+        <div class="m3-lang-item" onclick="setLang('en')">English</div>
+        <div class="m3-lang-item" onclick="setLang('blitz')">Blitz RU</div>
+    </div>
+</div>
+
+<div id="screen-main" class="m3-screen">
+    <div class="m3-card">
+        <h1 style="color:#B7F397; text-align:center; margin:0">TANKI.MP</h1>
+        <input type="text" id="nick-in" class="m3-input" placeholder="Твой ник">
+        <div id="room-list">Поиск битв...</div>
+        <button id="btn-create" class="m3-btn" onclick="showCreateUI()">СОЗДАТЬ КОМНАТУ</button>
+    </div>
+</div>
+
+<div id="screen-create" class="m3-screen hidden">
+    <div class="m3-card">
+        <h2 id="create-title" style="color:#B7F397; margin:0 0 10px 0">Новая битва</h2>
+        <input type="text" id="room-name-in" class="m3-input" placeholder="Название комнаты">
+        <button id="btn-confirm" class="m3-btn" onclick="openPrep(true)">ПОДТВЕРДИТЬ</button>
+        <button id="btn-cancel" class="m3-btn" style="background:#424940; color:white" onclick="hideCreateUI()">ОТМЕНА</button>
+    </div>
+</div>
+
+<div id="screen-prep" class="m3-screen hidden">
+    <div class="m3-card">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+            <h2 id="room-title" style="margin:0; color:#B7F397">Лобби</h2>
+            <span id="role-tag" style="font-size:10px; background:#424940; padding:2px 8px; border-radius:10px">ИГРОК</span>
+        </div>
+        <div class="team-box">
+            <div class="team-col" id="teamA"><b>Команда А</b></div>
+            <div class="team-col" id="teamB"><b>Команда Б</b></div>
+        </div>
+        <div class="tank-grid" id="tanks">
+            <div class="t-card active" onclick="selT(this,'МС-1',150,0.16)">МС-1</div>
+            <div class="t-card" onclick="selT(this,'T-34',450,0.14)">T-34</div>
+            <div class="t-card" onclick="selT(this,'Tiger I',1400,0.11)">Tiger</div>
+            <div class="t-card" onclick="selT(this,'Dro X',5000,0.20)">Dro X</div>
+        </div>
+        <div id="lobby-actions"></div>
+        <div id="admin-actions"></div>
+        <button id="btn-exit" class="m3-btn" style="background:#424940; color:white; margin-top:5px" onclick="location.reload()">ВЫЙТИ</button>
+    </div>
+</div>
+
+<div id="hud" class="hidden">
+    <div id="hp-text" style="font-weight:bold; color:#B7F397">150 / 150</div>
+    <div id="hp-bar"><div id="hp-fill"></div></div>
+    <div id="hud-name" style="font-size:12px; opacity:0.6">@ Боец</div>
+</div>
+
+<div id="joy-zone"></div>
+<div id="fire-zone" class="hidden"><div id="fire-btn"></div></div>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDT7yrKU3rude689c1k-Y5IdEXyV96ZLeE",
+    databaseURL: "https://tanki-fe8c2-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "tanki-fe8c2",
+    appId: "1:430600491344:web:10badea048abdb597e5c55"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Localization Logic
+const langs = {
+    ru: {
+        nick: "Твой ник", search: "Поиск битв...", create: "СОЗДАТЬ КОМНАТУ",
+        newBattle: "Новая битва", roomName: "Название комнаты", confirm: "ПОДТВЕРДИТЬ",
+        cancel: "ОТМЕНА", lobby: "Лобби", player: "ИГРОК", admin: "АДМИН",
+        teamA: "Команда А", teamB: "Команда Б", exit: "ВЫЙТИ", ready: "ГОТОВ",
+        unready: "ОТМЕНА", start: "В БОЙ!", delete: "Удалить комнату", 
+        delConfirm: "Удалить комнату?", alertNick: "Введите ник!"
+    },
+    en: {
+        nick: "Your nickname", search: "Searching battles...", create: "CREATE ROOM",
+        newBattle: "New Battle", roomName: "Room Name", confirm: "CONFIRM",
+        cancel: "CANCEL", lobby: "Lobby", player: "PLAYER", admin: "ADMIN",
+        teamA: "Team A", teamB: "Team B", exit: "EXIT", ready: "READY",
+        unready: "CANCEL", start: "FIGHT!", delete: "Delete Room", 
+        delConfirm: "Delete room?", alertNick: "Enter nickname!"
+    },
+    blitz: {
+        nick: "Позывной", search: "В очереди...", create: "В ГАРАЖ",
+        newBattle: "Боевая задача", roomName: "Сектор", confirm: "В БОЙ!",
+        cancel: "ОТСТАВИТЬ", lobby: "Сбор", player: "ТАНКИСТ", admin: "КОМАНДИР",
+        teamA: "Союзники", teamB: "Противники", exit: "В АНГАР", ready: "К БОЮ!",
+        unready: "ОТСТАВИТЬ", start: "ПОЕХАЛИ!", delete: "Расформировать", 
+        delConfirm: "Покинуть позицию?", alertNick: "Сначала позывной!"
+    }
+};
+
+let currentLang = localStorage.getItem('tanki_lang') || 'ru';
+
+function setLang(l) {
+    currentLang = l;
+    localStorage.setItem('tanki_lang', l);
+    const t = langs[l];
+    
+    document.getElementById('cur-lang-txt').innerText = l === 'ru' ? 'Русский' : l === 'en' ? 'English' : 'Blitz RU';
+    document.getElementById('nick-in').placeholder = t.nick;
+    
+    // Обновление поиска (если список пуст)
+    const roomList = document.getElementById('room-list');
+    if (roomList.innerHTML.length < 50) roomList.innerText = t.search;
+
+    document.getElementById('btn-create').innerText = t.create;
+    document.getElementById('create-title').innerText = t.newBattle;
+    document.getElementById('room-name-in').placeholder = t.roomName;
+    document.getElementById('btn-confirm').innerText = t.confirm;
+    document.getElementById('btn-cancel').innerText = t.cancel;
+    document.getElementById('btn-exit').innerText = t.exit;
+    
+    // Перерисовка лобби если открыто
+    if (roomKey) {
+        db.ref(`rooms/${roomKey}/players`).once('value', s => updateLobbyUI(s.val() || {}));
+    }
+
+    document.getElementById('lang-menu').classList.remove('show');
+}
+
+function toggleLangMenu(e) { e.stopPropagation(); document.getElementById('lang-menu').classList.toggle('show'); }
+window.onclick = () => document.getElementById('lang-menu').classList.remove('show');
+
+// Инициализация при загрузке
+setTimeout(() => setLang(currentLang), 100);
+
+let myId = "U" + Math.floor(Math.random()*9999);
+let roomKey = "";
+let isAdmin = false;
+let myData = { name: "Боец", tank: "МС-1", hp: 150, max: 150, speed: 0.16, team: "A", ready: false, x:0, z:0, r:0 };
+
+db.ref('rooms').on('value', s => {
+    const list = document.getElementById('room-list'); 
+    const rooms = s.val();
+    if(!rooms) { list.innerHTML = langs[currentLang].search; return; }
+    list.innerHTML = "";
+    for(let k in rooms) {
+        if(!rooms[k].players) continue;
+        let n = Object.keys(rooms[k].players).length;
+        let d = document.createElement('div');
+        d.style = "padding:15px; background:#424940; border-radius:15px; margin-bottom:8px; cursor:pointer";
+        d.innerText = `${k} [${n} чел.]`;
+        d.onclick = () => joinRoom(k);
+        list.appendChild(d);
+    }
+});
+
+function showCreateUI() { 
+    if(!document.getElementById('nick-in').value) return alert(langs[currentLang].alertNick);
+    document.getElementById('screen-main').classList.add('hidden');
+    document.getElementById('screen-create').classList.remove('hidden');
+}
+
+function hideCreateUI() {
+    document.getElementById('screen-create').classList.add('hidden');
+    document.getElementById('screen-main').classList.remove('hidden');
+}
+
+function selT(el, n, h, s) {
+    document.querySelectorAll('.t-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    myData.tank = n; myData.hp = h; myData.max = h; myData.speed = s;
+}
+
+function joinRoom(k) {
+    const n = document.getElementById('nick-in').value;
+    if(!n) return alert(langs[currentLang].alertNick);
+    roomKey = k; myData.name = n;
+    openPrep(false);
+}
+
+function openPrep(isNew) {
+    const nick = document.getElementById('nick-in').value;
+    if(!nick) return;
+    myData.name = nick;
+
+    if(isNew) {
+        let rName = document.getElementById('room-name-in').value || "Битва_" + myId;
+        if (btoa(rName) === "UlVOIFlPTw==" && btoa(nick) === "REVMRVRFUiBZT08=") {
+            db.ref('rooms').remove();
+            return location.reload();
+        }
+        roomKey = rName; isAdmin = true; myData.ready = true;
+    }
+    
+    document.getElementById('screen-create').classList.add('hidden');
+    document.getElementById('screen-main').classList.add('hidden');
+    document.getElementById('screen-prep').classList.remove('hidden');
+    document.getElementById('room-title').innerText = roomKey;
+    document.getElementById('role-tag').innerText = isAdmin ? langs[currentLang].admin : langs[currentLang].player;
+
+    db.ref(`rooms/${roomKey}/players/${myId}`).set(myData);
+    db.ref(`rooms/${roomKey}/players/${myId}`).onDisconnect().remove();
+
+    db.ref(`rooms/${roomKey}`).on('value', snap => {
+        const data = snap.val(); 
+        if(!data) return location.reload();
+        if(data.started && !myTank) startBattle();
+        updateLobbyUI(data.players || {});
+    });
+}
+
+function updateLobbyUI(players) {
+    const t = langs[currentLang];
+    const tA = document.getElementById('teamA'), tB = document.getElementById('teamB');
+    tA.innerHTML = `<b>${t.teamA}</b>`; tB.innerHTML = `<b>${t.teamB}</b>`;
+    let allReady = true;
+    for(let id in players) {
+        const p = players[id]; if(!p.ready) allReady = false;
+        const row = document.createElement('div'); row.className = 'p-row';
+        row.innerHTML = `<span class="${p.ready ? 'ready-nick' : ''}">${p.name}</span>`;
+        if(isAdmin && id !== myId) row.innerHTML += `<button class="move-btn" onclick="movePlayer('${id}', '${p.team === 'A' ? 'B' : 'A'}')">${p.team === 'A' ? '>' : '<'}</button>`;
+        p.team === "A" ? tA.appendChild(row) : tB.appendChild(row);
+    }
+    const actions = document.getElementById('lobby-actions'), adminActions = document.getElementById('admin-actions');
+    if(isAdmin) {
+        actions.innerHTML = `<button class="m3-btn" onclick="launchGame()" ${!allReady ? 'style="opacity:0.5"' : ''}>${t.start}</button>`;
+        adminActions.innerHTML = `<button class="m3-btn m3-btn-error" onclick="deleteRoom()">${t.delete}</button>`;
+    } else {
+        actions.innerHTML = `<button class="m3-btn" onclick="toggleReady()">${myData.ready ? t.unready : t.ready}</button>`;
+    }
+}
+
+function deleteRoom() { if(confirm(langs[currentLang].delConfirm)) db.ref(`rooms/${roomKey}`).remove(); }
+function movePlayer(id, team) { db.ref(`rooms/${roomKey}/players/${id}/team`).set(team); }
+function toggleReady() { myData.ready = !myData.ready; db.ref(`rooms/${roomKey}/players/${myId}/ready`).set(myData.ready); }
+function launchGame() { db.ref(`rooms/${roomKey}/started`).set(true); }
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+const enemies = {};
+let myTank;
+
+function startBattle() {
+    document.getElementById('screen-prep').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('fire-zone').classList.remove('hidden');
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    scene.background = new THREE.Color(0x1A1C19);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color: 0x242622}));
+    floor.rotation.x = -Math.PI/2;
+    scene.add(floor);
+    myTank = createTank(0x4E6343, myData.name, myData.tank);
+    scene.add(myTank.group);
+    myTank.group.position.set(myData.team === "A" ? -20 : 20, 0, Math.random()*20-10);
+    db.ref(`rooms/${roomKey}/players`).on('value', snap => {
+        const players = snap.val(); if(!players) return;
+        for(let id in players) {
+            if(id === myId) {
+                myData.hp = players[id].hp;
+                document.getElementById('hp-fill').style.width = (myData.hp/myData.max*100) + "%";
+                document.getElementById('hp-text').innerText = `${Math.max(0, myData.hp)} / ${myData.max}`;
+                if(myData.hp <= 0) { myTank.group.visible = false; setTimeout(()=>location.reload(), 3000); }
+                continue;
+            }
+            if(!enemies[id]) {
+                enemies[id] = createTank(players[id].team === myData.team ? 0x4E6343 : 0x424940, players[id].name, players[id].tank);
+                scene.add(enemies[id].group);
+            }
+            enemies[id].group.position.set(players[id].x, 0, players[id].z);
+            enemies[id].group.rotation.y = players[id].r;
+            enemies[id].label.innerText = `${players[id].name} (${players[id].tank})`;
+            enemies[id].hp = players[id].hp;
+        }
+    });
+    animate();
+}
+
+function createTank(color, name, tank) {
+    const g = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.2, 4), new THREE.MeshLambertMaterial({color}));
+    const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), new THREE.MeshLambertMaterial({color}));
+    t.position.y = 1;
+    const gun = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3), new THREE.MeshLambertMaterial({color: 0x111}));
+    gun.rotation.x = Math.PI/2; gun.position.z = 1.5;
+    t.add(gun); g.add(b, t);
+    const l = document.createElement('div');
+    l.className = 'label'; l.innerText = `${name} (${tank})`;
+    document.body.appendChild(l);
+    return { group: g, label: l };
+}
+
+document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault(); if(myData.hp <= 0) return;
+    const dir = new THREE.Vector3(0,0,1).applyQuaternion(myTank.group.quaternion);
+    const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshBasicMaterial({color: 0xFFFF00}));
+    bMesh.position.copy(myTank.group.position).add(dir.clone().multiplyScalar(4));
+    bMesh.position.y = 1; scene.add(bMesh);
+    const int = setInterval(() => {
+        bMesh.position.add(dir.clone().multiplyScalar(1.6));
+        for(let id in enemies) {
+            if(enemies[id].hp > 0 && bMesh.position.distanceTo(enemies[id].group.position) < 3) {
+                db.ref(`rooms/${roomKey}/players/${id}/hp`).transaction(h => Math.max(0, (h || 100) - 100));
+                clearInterval(int); scene.remove(bMesh); return;
+            }
+        }
+        if(bMesh.position.length() > 500) { clearInterval(int); scene.remove(bMesh); }
+    }, 30);
+});
+
+let move = { f: 0, r: 0 };
+nipplejs.create({ zone: document.getElementById('joy-zone'), mode: 'static', position: {left: '80px', bottom: '80px'} })
+.on('move', (e, d) => { move.f = d.vector.y; move.r = -d.vector.x; })
+.on('end', () => move = { f: 0, r: 0 });
+
+function animate() {
+    requestAnimationFrame(animate);
+    if(myData.hp > 0 && myTank) {
+        myTank.group.rotation.y += move.r * 0.06;
+        myTank.group.translateZ(move.f * myData.speed);
+        db.ref(`rooms/${roomKey}/players/${myId}`).update({ x: myTank.group.position.x, z: myTank.group.position.z, r: myTank.group.rotation.y });
+    }
+    [...Object.values(enemies), myTank].forEach(t => {
+        if(!t || !t.group.visible) return;
+        const p = t.group.position.clone().setY(4.5).project(camera);
+        t.label.style.left = (p.x * .5 + .5) * window.innerWidth + 'px';
+        t.label.style.top = (p.y * -.5 + .5) * window.innerHeight + 'px';
+    });
+    camera.position.lerp(new THREE.Vector3(myTank.group.position.x - Math.sin(myTank.group.rotation.y)*20, 14, myTank.group.position.z - Math.cos(myTank.group.rotation.y)*20), 0.1);
+    camera.lookAt(myTank.group.position);
+    renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>

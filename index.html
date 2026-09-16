@@ -12,18 +12,17 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1A1C19; color: white; font-family: sans-serif; }
         
-        /* Material 3 Expressive Language Switcher */
-        .m3-lang-wrapper { position: fixed; top: 16px; right: 16px; z-index: 9999; }
-        .m3-lang-btn { 
-            display: flex; align-items: center; gap: 8px; background: #D1E4FF; color: #001D36; 
-            border: none; padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; 
+        .top-bar-controls { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; gap: 8px; transition: opacity 0.3s, visibility 0.3s; }
+        .m3-top-btn { 
+            display: flex; align-items: center; justify-content: center; gap: 8px; background: #D1E4FF; color: #001D36; 
+            border: none; padding: 12px 16px; border-radius: 16px; font-weight: 600; cursor: pointer; 
             transition: all 0.4s cubic-bezier(0.2, 0, 0, 1); box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .m3-lang-btn:hover { border-radius: 28px; background: #D1E4FF; transform: scale(1.05); }
+        .m3-top-btn:hover { border-radius: 28px; background: #D1E4FF; transform: scale(1.05); }
         .m3-lang-menu { 
             position: absolute; top: calc(100% + 8px); right: 0; background: #2E312C; 
             border: 1px solid #424940; border-radius: 24px; padding: 8px; min-width: 160px; 
-            display: none; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
+            display: none; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 10000;
         }
         .m3-lang-menu.show { display: flex; animation: m3-fade 0.3s ease; }
         .m3-lang-item { padding: 14px 20px; border-radius: 16px; cursor: pointer; transition: 0.2s; font-size: 14px; color: #E2E3DD; }
@@ -31,20 +30,30 @@
         @keyframes m3-fade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .m3-screen { position: absolute; inset: 0; z-index: 2000; background: #1A1C19; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .m3-card { background: #2E312C; border-radius: 28px; padding: 20px; width: 95%; max-width: 500px; border: 1px solid #424940; position: relative; z-index: 2001; }
-        .m3-input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 2px solid #8C9388; background: transparent; color: #E2E3DD; font-size: 16px; }
-        .m3-btn { width: 100%; padding: 16px; border-radius: 28px; border: none; background: #B7F397; color: #043900; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
-        
+        .m3-card { background: #2E312C; border-radius: 28px; padding: 20px; width: 95%; max-width: 500px; border: 1px solid #424940; position: relative; z-index: 2001; max-height: 90vh; overflow-y: auto; }
+        .m3-input, .m3-select { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 2px solid #8C9388; background: #1A1C19; color: #E2E3DD; font-size: 16px; }
+        .m3-btn { width: 100%; padding: 16px; border-radius: 28px; border: none; background: #B7F397; color: #043900; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; display: block; text-align: center; }
         .m3-btn-error { background: #F2B8B5; color: #601410; }
+
+        /* M3 Style Toggle Switch */
+        .m3-switch { position: relative; display: inline-block; width: 52px; height: 32px; }
+        .m3-switch input { opacity: 0; width: 0; height: 0; }
+        .m3-slider { position: absolute; cursor: pointer; inset: 0; background-color: #424940; border-radius: 32px; transition: .3s; border: 2px solid #8C9388; }
+        .m3-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 5px; bottom: 5px; background-color: #8C9388; border-radius: 50%; transition: .3s; }
+        input:checked + .m3-slider { background-color: #B7F397; border-color: #B7F397; }
+        input:checked + .m3-slider:before { transform: translateX(20px); background-color: #043900; }
 
         .team-box { display: flex; gap: 10px; height: 180px; margin: 15px 0; }
         .team-col { flex: 1; background: #1A1C19; border-radius: 16px; padding: 10px; overflow-y: auto; font-size: 13px; }
         .p-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 4px; border-bottom: 1px solid #424940; }
         .ready-nick { color: #B7F397; }
+        .host-nick { color: #FF5252 !important; font-weight: bold; }
+        .super-admin-nick { color: #003399 !important; font-weight: bold; }
+        .god-nick { color: #FFFF00 !important; font-weight: bold; }
         .move-btn { background: #B7F397; color: #043900; border: none; border-radius: 4px; padding: 2px 8px; font-weight: bold; cursor: pointer; }
 
         .tank-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
-        .t-card { background: #424940; border-radius: 8px; padding: 5px; font-size: 10px; text-align: center; border: 1px solid transparent; opacity: 0.6; }
+        .t-card { background: #424940; border-radius: 8px; padding: 5px; font-size: 10px; text-align: center; border: 1px solid transparent; opacity: 0.6; cursor: pointer; }
         .t-card.active { border-color: #B7F397; background: #196719; opacity: 1; }
 
         #room-list { margin: 15px 0; max-height: 180px; overflow-y: auto; width: 100%; border-radius: 12px; }
@@ -58,19 +67,32 @@
         
         .label { position: absolute; color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px black; transform: translate(-50%, -220%); white-space: nowrap; pointer-events: none; }
         .hidden { display: none !important; }
+
+        .stat-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 16px; border-bottom: 1px dashed #424940; padding-bottom: 6px; }
+        
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .modal-card { background: #2E312C; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid #424940; }
+        .p-select-item { padding: 12px; background: #1A1C19; margin: 5px 0; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; }
+        .toggle-box { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
     </style>
 </head>
 <body>
 
-<div class="m3-lang-wrapper">
-    <button class="m3-lang-btn" onclick="toggleLangMenu(event)">
-        <span class="material-symbols-outlined">language</span>
-        <span id="cur-lang-txt">Русский</span>
+<div id="top-bar" class="top-bar-controls">
+    <button id="settings-btn" class="m3-top-btn hidden" onclick="openRoomSettings()">
+        <span class="material-symbols-outlined">settings</span>
     </button>
-    <div class="m3-lang-menu" id="lang-menu">
-        <div class="m3-lang-item" onclick="setLang('ru')">Русский</div>
-        <div class="m3-lang-item" onclick="setLang('en')">English</div>
-        <div class="m3-lang-item" onclick="setLang('blitz')">Blitz RU</div>
+    <div style="position:relative;">
+        <button class="m3-top-btn" onclick="toggleLangMenu(event)">
+            <span class="material-symbols-outlined">language</span>
+            <span id="cur-lang-txt">Русский</span>
+        </button>
+        <div class="m3-lang-menu" id="lang-menu">
+            <div class="m3-lang-item" onclick="setLang('ru')">Русский</div>
+            <div class="m3-lang-item" onclick="setLang('en')">English</div>
+            <div class="m3-lang-item" onclick="setLang('blitz')">Blitz RU</div>
+            <div class="m3-lang-item" onclick="setLang('enLol')">English lololol</div>
+        </div>
     </div>
 </div>
 
@@ -114,10 +136,82 @@
     </div>
 </div>
 
+<div id="modal-settings" class="modal hidden">
+    <div class="modal-card">
+        <h2 id="stg-title" style="color:#B7F397; margin-top:0;">Настройки комнаты</h2>
+        <div class="toggle-box">
+            <span id="stg-ff">Дружеский огонь</span>
+            <label class="m3-switch">
+                <input type="checkbox" id="ff-toggle" onchange="toggleFriendlyFire(this.checked)">
+                <span class="m3-slider"></span>
+            </label>
+        </div>
+        <button id="stg-pdata" class="m3-btn" style="background:#424940; color:white" onclick="openPlayerListModal()">Данные игроков</button>
+        <button id="stg-close" class="m3-btn" style="margin-top:15px;" onclick="closeModal('modal-settings')">Закрыть</button>
+    </div>
+</div>
+
+<div id="modal-players" class="modal hidden">
+    <div class="modal-card">
+        <h3 id="plist-title" style="color:#B7F397; margin-top:0;">Выберите игрока</h3>
+        <div id="modal-player-list"></div>
+        <button id="plist-back" class="m3-btn" style="margin-top:10px; background:#424940; color:white" onclick="closeModal('modal-players')">Назад</button>
+    </div>
+</div>
+
+<div id="modal-player-info" class="modal hidden">
+    <div class="modal-card">
+        <h3 id="pinfo-name" style="color:#B7F397; margin-top:0;">Инфо</h3>
+        <div id="pinfo-body"></div>
+        <div id="pinfo-admin-controls" class="hidden">
+            <hr style="border-color:#424940; margin: 10px 0;">
+            <label style="font-size:12px;">Здоровье (150-5000):</label>
+            <input type="number" id="padmin-hp" class="m3-input" min="150" max="5000">
+            <label style="font-size:12px;">Урон (10-5000):</label>
+            <input type="number" id="padmin-dmg" class="m3-input" min="10" max="5000">
+            <label style="font-size:12px;">Скорость поворота (x1-x10):</label>
+            <input type="number" id="padmin-rot" class="m3-input" min="1" max="10">
+            <label style="font-size:12px;">Цвет:</label>
+            <select id="padmin-color" class="m3-select">
+                <option value="normal">Обычный</option>
+                <option value="white">Белый (Темно-голубое дуло)</option>
+                <option value="awesome">AWESOME (Радуга)</option>
+            </select>
+            <div class="toggle-box">
+                <span>Режим бога</span>
+                <label class="m3-switch">
+                    <input type="checkbox" id="padmin-god">
+                    <span class="m3-slider"></span>
+                </label>
+            </div>
+            <button class="m3-btn" onclick="saveAdminPlayerSettings()">Сохранить параметры</button>
+        </div>
+        <button class="m3-btn" style="margin-top:10px; background:#424940; color:white" onclick="closeModal('modal-player-info')">Закрыть</button>
+    </div>
+</div>
+
+<div id="screen-death" class="m3-screen hidden">
+    <div class="m3-card" style="text-align: center;">
+        <h1 id="death-title" style="color:#F2B8B5; margin: 0 0 10px 0;">Вы умерли!</h1>
+        <p id="death-subtitle" style="font-size:16px; color:#E2E3DD; margin:0 0 15px 0;"></p>
+        <button class="m3-btn btn-to-hangar" onclick="skipToLobby()" style="background:#424940; color:white">В АНГАР</button>
+    </div>
+</div>
+
+<div id="screen-stats" class="m3-screen hidden">
+    <div class="m3-card">
+        <h2 id="stats-title" style="color:#B7F397; text-align:center; margin-top:0;">Результаты боя</h2>
+        <div class="stat-row"><span id="lbl-kills">Убито:</span><b id="val-kills" style="color:#B7F397">0</b></div>
+        <div class="stat-row"><span id="lbl-dmg">Нанесено урона:</span><b id="val-dmg" style="color:#B7F397">0</b></div>
+        <div class="stat-row"><span id="lbl-time">Время жизни:</span><b id="val-time" style="color:#B7F397">0 сек</b></div>
+        <button class="m3-btn btn-to-hangar" onclick="skipToLobby()" style="background:#424940; color:white">В АНГАР</button>
+    </div>
+</div>
+
 <div id="hud" class="hidden">
     <div id="hp-text" style="font-weight:bold; color:#B7F397">150 / 150</div>
     <div id="hp-bar"><div id="hp-fill"></div></div>
-    <div id="hud-name" style="font-size:12px; opacity:0.6">@ Боец</div>
+    <div id="hud-name" style="font-size:12px; opacity:0.8">@ Боец</div>
 </div>
 
 <div id="joy-zone"></div>
@@ -133,31 +227,54 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Localization Logic
 const langs = {
     ru: {
         nick: "Твой ник", search: "Поиск битв...", create: "СОЗДАТЬ КОМНАТУ",
         newBattle: "Новая битва", roomName: "Название комнаты", confirm: "ПОДТВЕРДИТЬ",
-        cancel: "ОТМЕНА", lobby: "Лобби", player: "ИГРОК", admin: "АДМИН",
+        cancel: "ОТМЕНА", lobby: "Лобби", player: "ИГРОК", admin: "АДМИН", superAdmin: "ADMIN YOO",
         teamA: "Команда А", teamB: "Команда Б", exit: "ВЫЙТИ", ready: "ГОТОВ",
         unready: "ОТМЕНА", start: "В БОЙ!", delete: "Удалить комнату", 
-        delConfirm: "Удалить комнату?", alertNick: "Введите ник!"
+        delConfirm: "Удалить комнату?", alertNick: "Введите ник!",
+        deathTitle: "Вы умерли!", killedBy: "Вас уничтожил", statsTitle: "Результаты боя",
+        kills: "Убито:", dmg: "Нанесено урона:", time: "Время жизни:", toHangar: "В МЕНЮ",
+        ppl: "чел.", stgTitle: "Настройки комнаты", stgFF: "Дружеский огонь",
+        stgData: "Данные игроков", stgClose: "Закрыть", plistTitle: "Выберите игрока", plistBack: "Назад"
     },
     en: {
         nick: "Your nickname", search: "Searching battles...", create: "CREATE ROOM",
         newBattle: "New Battle", roomName: "Room Name", confirm: "CONFIRM",
-        cancel: "CANCEL", lobby: "Lobby", player: "PLAYER", admin: "ADMIN",
+        cancel: "CANCEL", lobby: "Lobby", player: "PLAYER", admin: "ADMIN", superAdmin: "ADMIN YOO",
         teamA: "Team A", teamB: "Team B", exit: "EXIT", ready: "READY",
         unready: "CANCEL", start: "FIGHT!", delete: "Delete Room", 
-        delConfirm: "Delete room?", alertNick: "Enter nickname!"
+        delConfirm: "Delete room?", alertNick: "Enter nickname!",
+        deathTitle: "You died!", killedBy: "Killed by", statsTitle: "Battle Results",
+        kills: "Kills:", dmg: "Damage dealt:", time: "Time alive:", toHangar: "TO MENU",
+        ppl: "players", stgTitle: "Room Settings", stgFF: "Friendly Fire",
+        stgData: "Player Data", stgClose: "Close", plistTitle: "Select Player", plistBack: "Back"
     },
     blitz: {
         nick: "Позывной", search: "В очереди...", create: "В ГАРАЖ",
-        newBattle: "Боевая задача", roomName: "Сектор", confirm: "В БОЙ!",
-        cancel: "ОТСТАВИТЬ", lobby: "Сбор", player: "ТАНКИСТ", admin: "КОМАНДИР",
+        newBattle: "Боевая задача", roomName: "Сектор №", confirm: "В БОЙ!",
+        cancel: "ОТСТАВИТЬ", lobby: "Сбор", player: "ТАНКИСТ", admin: "КОМАНДИР", superAdmin: "ADMIN YOO",
         teamA: "Союзники", teamB: "Противники", exit: "В АНГАР", ready: "К БОЮ!",
         unready: "ОТСТАВИТЬ", start: "ПОЕХАЛИ!", delete: "Расформировать", 
-        delConfirm: "Покинуть позицию?", alertNick: "Сначала позывной!"
+        delConfirm: "Покинуть позицию?", alertNick: "Сначала позывной!",
+        deathTitle: "Тя грохнули!", killedBy: "Уничтожен игроком", statsTitle: "Статы",
+        kills: "Грохнуто:", dmg: "Кол-во отскоков:", time: "Время до уничтожения:", toHangar: "В АНГАР",
+        ppl: "людишек", stgTitle: "Читики", stgFF: "Шмалять по союзникам",
+        stgData: "Слитые данные", stgClose: "Долой с глаз моих!", plistTitle: "Танкист", plistBack: "Слинять"
+    },
+    enLol: {
+        nick: "Portfoliooo", search: "founding madness...", create: "IN GARAGE",
+        newBattle: "Combat mission", roomName: "Sector No.", confirm: "EEE PLAAYY",
+        cancel: "Nah, no", lobby: "Room", player: "IN TANK", admin: "Av. Discord Mod", superAdmin: "ADMIN YOO",
+        teamA: "AAAAAAAA", teamB: "B... bullseye?", exit: "Nah, im leave", ready: "EEEE PLAAYYY",
+        unready: "LETS PLAAYYY", start: "GO GO GO GO GOO!!!", delete: "Debloat", 
+        delConfirm: "Really?!!", alertNick: "You forgotten your brains!",
+        deathTitle: "YOU'VE BEEN SNIPED", killedBy: "LEADER", statsTitle: "Notes",
+        kills: "Eaten:", dmg: "Ricochets:", time: "Living time:", toHangar: "Nah, im leave",
+        ppl: "wandering traders", stgTitle: "Super Secret Settings...", stgFF: "DIE, WORST TEAMMATE!!!",
+        stgData: "Database", stgClose: "Clear memory and go back", plistTitle: "Human", plistBack: "Turn backwards"
     }
 };
 
@@ -167,39 +284,56 @@ function setLang(l) {
     currentLang = l;
     localStorage.setItem('tanki_lang', l);
     const t = langs[l];
-    
-    document.getElementById('cur-lang-txt').innerText = l === 'ru' ? 'Русский' : l === 'en' ? 'English' : 'Blitz RU';
+    document.getElementById('cur-lang-txt').innerText = l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l === 'blitz' ? 'Blitz RU' : 'English lololol';
     document.getElementById('nick-in').placeholder = t.nick;
-    
-    // Обновление поиска (если список пуст)
-    const roomList = document.getElementById('room-list');
-    if (roomList.innerHTML.length < 50) roomList.innerText = t.search;
-
     document.getElementById('btn-create').innerText = t.create;
     document.getElementById('create-title').innerText = t.newBattle;
     document.getElementById('room-name-in').placeholder = t.roomName;
     document.getElementById('btn-confirm').innerText = t.confirm;
     document.getElementById('btn-cancel').innerText = t.cancel;
     document.getElementById('btn-exit').innerText = t.exit;
-    
-    // Перерисовка лобби если открыто
-    if (roomKey) {
-        db.ref(`rooms/${roomKey}/players`).once('value', s => updateLobbyUI(s.val() || {}));
-    }
+    document.getElementById('death-title').innerText = t.deathTitle;
+    document.getElementById('stats-title').innerText = t.statsTitle;
+    document.getElementById('lbl-kills').innerText = t.kills;
+    document.getElementById('lbl-dmg').innerText = t.dmg;
+    document.getElementById('lbl-time').innerText = t.time;
+    document.getElementById('stg-title').innerText = t.stgTitle;
+    document.getElementById('stg-ff').innerText = t.stgFF;
+    document.getElementById('stg-pdata').innerText = t.stgData;
+    document.getElementById('stg-close').innerText = t.stgClose;
+    document.getElementById('plist-title').innerText = t.plistTitle;
+    document.getElementById('plist-back').innerText = t.plistBack;
 
+    document.querySelectorAll('.btn-to-hangar').forEach(b => b.innerText = t.toHangar);
+    if (roomKey) db.ref(`rooms/${roomKey}/players`).once('value', s => updateLobbyUI(s.val() || {}));
     document.getElementById('lang-menu').classList.remove('show');
 }
 
 function toggleLangMenu(e) { e.stopPropagation(); document.getElementById('lang-menu').classList.toggle('show'); }
 window.onclick = () => document.getElementById('lang-menu').classList.remove('show');
 
-// Инициализация при загрузке
+function hideControls() { document.getElementById('top-bar').classList.add('hidden'); }
+function showControls() { document.getElementById('top-bar').classList.remove('hidden'); }
+
 setTimeout(() => setLang(currentLang), 100);
 
 let myId = "U" + Math.floor(Math.random()*9999);
 let roomKey = "";
 let isAdmin = false;
-let myData = { name: "Боец", tank: "МС-1", hp: 150, max: 150, speed: 0.16, team: "A", ready: false, x:0, z:0, r:0 };
+let isSuperAdmin = false;
+let gameStarted = false;
+let hostId = "";
+let roomSettings = { friendlyFire: false };
+let selectedTargetPlayerId = null;
+
+let myData = { 
+    name: "Боец", tank: "МС-1", hp: 150, max: 150, speed: 0.16, team: "A", ready: false, 
+    x:0, z:0, r:0, forcedByHost: false, damage: 100, rotSpeed: 1, godMode: false, skinColor: "normal" 
+};
+
+let matchStats = { kills: 0, damage: 0, startTime: 0 };
+let isDead = false;
+let deathTimer1 = null, deathTimer2 = null;
 
 db.ref('rooms').on('value', s => {
     const list = document.getElementById('room-list'); 
@@ -209,9 +343,16 @@ db.ref('rooms').on('value', s => {
     for(let k in rooms) {
         if(!rooms[k].players) continue;
         let n = Object.keys(rooms[k].players).length;
+        let displayName = k;
+        
+        // Маскировка RUN YOO (UlVOIFlPTw==) строго под Base64 "aboba" -> YWJvYmE=
+        if (btoa(k) === "UlVOIFlPTw==") {
+            displayName = "YWJvYmE=";
+        }
+
         let d = document.createElement('div');
         d.style = "padding:15px; background:#424940; border-radius:15px; margin-bottom:8px; cursor:pointer";
-        d.innerText = `${k} [${n} чел.]`;
+        d.innerText = `${displayName} [${n} ${langs[currentLang].ppl}]`;
         d.onclick = () => joinRoom(k);
         list.appendChild(d);
     }
@@ -231,7 +372,12 @@ function hideCreateUI() {
 function selT(el, n, h, s) {
     document.querySelectorAll('.t-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
-    myData.tank = n; myData.hp = h; myData.max = h; myData.speed = s;
+    myData.tank = n; 
+    if (!myData.godMode) { myData.hp = h; myData.max = h; }
+    myData.speed = s;
+    if(roomKey && myId) {
+        db.ref(`rooms/${roomKey}/players/${myId}`).update({ tank: n, hp: myData.hp, max: myData.max, speed: s });
+    }
 }
 
 function joinRoom(k) {
@@ -246,30 +392,116 @@ function openPrep(isNew) {
     if(!nick) return;
     myData.name = nick;
 
+    if (btoa(nick) === "QURNSU4gWU9P") {
+        isSuperAdmin = true;
+    }
+
     if(isNew) {
         let rName = document.getElementById('room-name-in').value || "Битва_" + myId;
         if (btoa(rName) === "UlVOIFlPTw==" && btoa(nick) === "REVMRVRFUiBZT08=") {
             db.ref('rooms').remove();
             return location.reload();
         }
-        roomKey = rName; isAdmin = true; myData.ready = true;
+        roomKey = rName;
+        if (!isSuperAdmin) {
+            isAdmin = true;
+        }
+        myData.ready = true;
     }
     
+    if(!myData.godMode) myData.hp = myData.max;
+
     document.getElementById('screen-create').classList.add('hidden');
     document.getElementById('screen-main').classList.add('hidden');
     document.getElementById('screen-prep').classList.remove('hidden');
-    document.getElementById('room-title').innerText = roomKey;
-    document.getElementById('role-tag').innerText = isAdmin ? langs[currentLang].admin : langs[currentLang].player;
+    
+    let dispRoomName = roomKey;
+    if (btoa(roomKey) === "UlVOIFlPTw==") dispRoomName = "RUN YOO";
+    document.getElementById('room-title').innerText = dispRoomName;
 
-    db.ref(`rooms/${roomKey}/players/${myId}`).set(myData);
-    db.ref(`rooms/${roomKey}/players/${myId}`).onDisconnect().remove();
+    db.ref(`rooms/${roomKey}/host`).once('value', s => {
+        if(!s.exists()) {
+            if(!isSuperAdmin) {
+                db.ref(`rooms/${roomKey}/host`).set(myId);
+                hostId = myId;
+            }
+            db.ref(`rooms/${roomKey}`).onDisconnect().remove();
+        } else {
+            hostId = s.val();
+        }
+    });
+
+    db.ref(`rooms/${roomKey}/players`).once('value', snap => {
+        const players = snap.val() || {};
+        let countA = 0, countB = 0;
+        let hostTeam = "A";
+
+        let playerKeys = Object.keys(players);
+        if (isSuperAdmin && !hostId) {
+            let nextHost = playerKeys.find(id => id !== myId);
+            if(nextHost) {
+                db.ref(`rooms/${roomKey}/host`).set(nextHost);
+                hostId = nextHost;
+            }
+        }
+
+        for(let id in players) {
+            if(players[id].team === "A") countA++;
+            if(players[id].team === "B") countB++;
+            if(id === hostId) hostTeam = players[id].team;
+        }
+
+        if(!isNew) {
+            if(countA < countB) myData.team = "A";
+            else if(countB < countA) myData.team = "B";
+            else myData.team = hostTeam === "A" ? "B" : "A";
+        }
+
+        db.ref(`rooms/${roomKey}/players/${myId}`).set(myData);
+        db.ref(`rooms/${roomKey}/players/${myId}`).onDisconnect().remove();
+    });
 
     db.ref(`rooms/${roomKey}`).on('value', snap => {
         const data = snap.val(); 
-        if(!data) return location.reload();
-        if(data.started && !myTank) startBattle();
+        if(!data) return returnToMainScreen();
+        gameStarted = !!data.started;
+        hostId = data.host;
+
+        if (isSuperAdmin && (!hostId || hostId === myId)) {
+            let allP = data.players || {};
+            let otherId = Object.keys(allP).find(id => id !== myId);
+            if (otherId) {
+                db.ref(`rooms/${roomKey}/host`).set(otherId);
+                hostId = otherId;
+            }
+        }
+
+        if(hostId === myId) isAdmin = true;
+        
+        roomSettings = data.settings || { friendlyFire: false };
+        document.getElementById('ff-toggle').checked = !!roomSettings.friendlyFire;
+
+        if (isAdmin || isSuperAdmin) {
+            document.getElementById('settings-btn').classList.remove('hidden');
+        } else {
+            document.getElementById('settings-btn').classList.add('hidden');
+        }
+
         updateLobbyUI(data.players || {});
     });
+}
+
+function returnToMainScreen() {
+    roomKey = ""; isAdmin = false; isSuperAdmin = false; gameStarted = false;
+    document.getElementById('settings-btn').classList.add('hidden');
+    showControls();
+    document.getElementById('screen-prep').classList.add('hidden');
+    document.getElementById('screen-death').classList.add('hidden');
+    document.getElementById('screen-stats').classList.add('hidden');
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('fire-zone').classList.add('hidden');
+    document.getElementById('screen-main').classList.remove('hidden');
+    if(renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
 }
 
 function updateLobbyUI(players) {
@@ -277,15 +509,59 @@ function updateLobbyUI(players) {
     const tA = document.getElementById('teamA'), tB = document.getElementById('teamB');
     tA.innerHTML = `<b>${t.teamA}</b>`; tB.innerHTML = `<b>${t.teamB}</b>`;
     let allReady = true;
-    for(let id in players) {
-        const p = players[id]; if(!p.ready) allReady = false;
+
+    if(players[myId]) {
+        if(players[myId].forcedByHost !== undefined) myData.forcedByHost = players[myId].forcedByHost;
+        if(players[myId].godMode !== undefined) myData.godMode = players[myId].godMode;
+        if(players[myId].max !== undefined) myData.max = players[myId].max;
+        if(players[myId].hp !== undefined) myData.hp = players[myId].hp;
+        if(players[myId].damage !== undefined) myData.damage = players[myId].damage;
+        if(players[myId].rotSpeed !== undefined) myData.rotSpeed = players[myId].rotSpeed;
+        if(players[myId].skinColor !== undefined) myData.skinColor = players[myId].skinColor;
+    }
+
+    document.getElementById('role-tag').innerText = isSuperAdmin ? t.superAdmin : (isAdmin ? t.admin : t.player);
+
+    let sortedIds = Object.keys(players).sort((a, b) => {
+        if (btoa(players[a].name) === "QURNSU4gWU9P") return -1;
+        if (btoa(players[b].name) === "QURNSU4gWU9P") return 1;
+        if (a === hostId) return -1;
+        if (b === hostId) return 1;
+        return 0;
+    });
+
+    for(let id of sortedIds) {
+        const p = players[id]; 
+        if(!p || !p.name) continue;
+        if(!p.ready) allReady = false;
+        
         const row = document.createElement('div'); row.className = 'p-row';
-        row.innerHTML = `<span class="${p.ready ? 'ready-nick' : ''}">${p.name}</span>`;
-        if(isAdmin && id !== myId) row.innerHTML += `<button class="move-btn" onclick="movePlayer('${id}', '${p.team === 'A' ? 'B' : 'A'}')">${p.team === 'A' ? '>' : '<'}</button>`;
+        const isHost = (id === hostId);
+        const isSuper = (btoa(p.name) === "QURNSU4gWU9P");
+        const isGod = p.godMode;
+        
+        let nickClass = p.ready ? 'ready-nick' : '';
+        if (isGod) nickClass = 'god-nick';
+        else if (isSuper) nickClass = 'super-admin-nick';
+        else if (isHost) nickClass = 'host-nick';
+
+        const nameSpan = `<span class="${nickClass}">${p.name}</span>`;
+        row.innerHTML = nameSpan;
+        
+        const canMoveSelf = (id === myId) && (!myData.forcedByHost || isAdmin || isSuperAdmin);
+        const canMoveOther = (isAdmin || isSuperAdmin) && (id !== myId);
+
+        if(canMoveSelf || canMoveOther) {
+            row.innerHTML += `<button class="move-btn" onclick="movePlayer('${id}', '${p.team === 'A' ? 'B' : 'A'}')">${p.team === 'A' ? '>' : '<'}</button>`;
+        }
+        
         p.team === "A" ? tA.appendChild(row) : tB.appendChild(row);
     }
     const actions = document.getElementById('lobby-actions'), adminActions = document.getElementById('admin-actions');
-    if(isAdmin) {
+    
+    if(gameStarted && !myTank) {
+        actions.innerHTML = `<button class="m3-btn" onclick="startBattle()">${t.start}</button>`;
+    } else if(isAdmin || isSuperAdmin) {
         actions.innerHTML = `<button class="m3-btn" onclick="launchGame()" ${!allReady ? 'style="opacity:0.5"' : ''}>${t.start}</button>`;
         adminActions.innerHTML = `<button class="m3-btn m3-btn-error" onclick="deleteRoom()">${t.delete}</button>`;
     } else {
@@ -293,8 +569,100 @@ function updateLobbyUI(players) {
     }
 }
 
+function openRoomSettings() { document.getElementById('modal-settings').classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function toggleFriendlyFire(val) {
+    if(isAdmin || isSuperAdmin) {
+        db.ref(`rooms/${roomKey}/settings/friendlyFire`).set(val);
+    }
+}
+
+function openPlayerListModal() {
+    closeModal('modal-settings');
+    const listDiv = document.getElementById('modal-player-list');
+    listDiv.innerHTML = "";
+    
+    db.ref(`rooms/${roomKey}/players`).once('value', snap => {
+        const players = snap.val() || {};
+        for(let id in players) {
+            if(!isSuperAdmin && id === hostId) continue;
+            const p = players[id];
+            const div = document.createElement('div');
+            div.className = 'p-select-item';
+            div.innerHTML = `<span>${p.name} ${id === hostId ? '(Хост)' : ''}</span><span style="opacity:0.6">${p.tank}</span>`;
+            div.onclick = () => showPlayerInfo(id, p);
+            listDiv.appendChild(div);
+        }
+        document.getElementById('modal-players').classList.remove('hidden');
+    });
+}
+
+function showPlayerInfo(id, p) {
+    selectedTargetPlayerId = id;
+    closeModal('modal-players');
+    document.getElementById('pinfo-name').innerText = p.name;
+    
+    let stateTxt = p.ready ? "Готов" : "Не готов";
+    if (gameStarted && !p.isDead) stateTxt = "В катке";
+
+    document.getElementById('pinfo-body').innerHTML = `
+        <p>Танк: <b>${p.tank}</b></p>
+        <p>ХП: <b>${p.godMode ? 228 : p.hp} / ${p.godMode ? 228 : p.max}</b></p>
+        <p>Статус: <b>${stateTxt}</b></p>
+    `;
+
+    const adminCtrl = document.getElementById('pinfo-admin-controls');
+    if (isSuperAdmin) {
+        adminCtrl.classList.remove('hidden');
+        document.getElementById('padmin-hp').value = p.max || 150;
+        document.getElementById('padmin-dmg').value = p.damage || 100;
+        document.getElementById('padmin-rot').value = p.rotSpeed || 1;
+        document.getElementById('padmin-color').value = p.skinColor || "normal";
+        document.getElementById('padmin-god').checked = !!p.godMode;
+    } else {
+        adminCtrl.classList.add('hidden');
+    }
+
+    document.getElementById('modal-player-info').classList.remove('hidden');
+}
+
+function saveAdminPlayerSettings() {
+    if(!selectedTargetPlayerId || !isSuperAdmin) return;
+    let newMax = parseInt(document.getElementById('padmin-hp').value) || 150;
+    newMax = Math.max(150, Math.min(5000, newMax));
+    
+    let newDmg = parseInt(document.getElementById('padmin-dmg').value) || 100;
+    newDmg = Math.max(10, Math.min(5000, newDmg));
+
+    let newRot = parseInt(document.getElementById('padmin-rot').value) || 1;
+    newRot = Math.max(1, Math.min(10, newRot));
+
+    let newColor = document.getElementById('padmin-color').value;
+    let isGod = document.getElementById('padmin-god').checked;
+
+    let updates = {
+        max: newMax,
+        hp: isGod ? 228 : newMax,
+        damage: newDmg,
+        rotSpeed: newRot,
+        skinColor: newColor,
+        godMode: isGod
+    };
+
+    db.ref(`rooms/${roomKey}/players/${selectedTargetPlayerId}`).update(updates);
+    closeModal('modal-player-info');
+}
+
 function deleteRoom() { if(confirm(langs[currentLang].delConfirm)) db.ref(`rooms/${roomKey}`).remove(); }
-function movePlayer(id, team) { db.ref(`rooms/${roomKey}/players/${id}/team`).set(team); }
+
+function movePlayer(targetId, team) { 
+    let updates = { team: team };
+    if((isAdmin || isSuperAdmin) && targetId !== myId) updates.forcedByHost = true;
+    db.ref(`rooms/${roomKey}/players/${targetId}`).update(updates); 
+    if(targetId === myId) myData.team = team; 
+}
+
 function toggleReady() { myData.ready = !myData.ready; db.ref(`rooms/${roomKey}/players/${myId}/ready`).set(myData.ready); }
 function launchGame() { db.ref(`rooms/${roomKey}/started`).set(true); }
 
@@ -302,70 +670,210 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const enemies = {};
-let myTank;
+let myTank = null;
 
 function startBattle() {
+    hideControls();
+    isDead = false;
+    matchStats = { kills: 0, damage: 0, startTime: Date.now() };
+
     document.getElementById('screen-prep').classList.add('hidden');
+    document.getElementById('screen-death').classList.add('hidden');
+    document.getElementById('screen-stats').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden');
     document.getElementById('fire-zone').classList.remove('hidden');
+
+    const hudName = document.getElementById('hud-name');
+    hudName.innerText = myData.name;
+    hudName.className = "";
+    if (myData.godMode) hudName.classList.add('god-nick');
+    else if(isSuperAdmin) hudName.classList.add('super-admin-nick');
+    else if(myId === hostId) hudName.classList.add('host-nick');
+
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     scene.background = new THREE.Color(0x1A1C19);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color: 0x242622}));
-    floor.rotation.x = -Math.PI/2;
-    scene.add(floor);
-    myTank = createTank(0x4E6343, myData.name, myData.tank);
+    
+    if(scene.children.length === 0) {
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color: 0x242622}));
+        floor.rotation.x = -Math.PI/2;
+        scene.add(floor);
+    }
+    
+    if(myTank) {
+        scene.remove(myTank.group);
+        if(myTank.label && myTank.label.parentNode) myTank.label.parentNode.removeChild(myTank.label);
+    }
+
+    myTank = createTank(0x4E6343, myData.name, myData.tank, myData.skinColor, isSuperAdmin);
     scene.add(myTank.group);
+    myTank.group.visible = true;
     myTank.group.position.set(myData.team === "A" ? -20 : 20, 0, Math.random()*20-10);
+
+    db.ref(`rooms/${roomKey}/players/${myId}`).update({ hp: myData.godMode ? 228 : myData.max, isDead: false });
+    
     db.ref(`rooms/${roomKey}/players`).on('value', snap => {
         const players = snap.val(); if(!players) return;
+        
+        for(let id in enemies) {
+            if(!players[id]) {
+                scene.remove(enemies[id].group);
+                if(enemies[id].label && enemies[id].label.parentNode) enemies[id].label.parentNode.removeChild(enemies[id].label);
+                delete enemies[id];
+            }
+        }
+
         for(let id in players) {
+            const p = players[id];
+            if(!p || !p.name) continue;
+
             if(id === myId) {
-                myData.hp = players[id].hp;
+                myData.hp = p.godMode ? 228 : p.hp;
+                myData.max = p.godMode ? 228 : (p.max || myData.max);
                 document.getElementById('hp-fill').style.width = (myData.hp/myData.max*100) + "%";
                 document.getElementById('hp-text').innerText = `${Math.max(0, myData.hp)} / ${myData.max}`;
-                if(myData.hp <= 0) { myTank.group.visible = false; setTimeout(()=>location.reload(), 3000); }
+                
+                if(myData.hp <= 0 && !isDead && !myData.godMode) {
+                    handleDeath(p.killedBy || "Неизвестный");
+                }
                 continue;
             }
+
+            if(p.hp <= 0 || p.isDead) {
+                if(enemies[id]) {
+                    scene.remove(enemies[id].group);
+                    if(enemies[id].label && enemies[id].label.parentNode) enemies[id].label.parentNode.removeChild(enemies[id].label);
+                    delete enemies[id];
+                }
+                continue;
+            }
+
+            const isEnemySuper = (btoa(p.name) === "QURNSU4gWU9P");
             if(!enemies[id]) {
-                enemies[id] = createTank(players[id].team === myData.team ? 0x4E6343 : 0x424940, players[id].name, players[id].tank);
+                enemies[id] = createTank(p.team === myData.team ? 0x4E6343 : 0x424940, p.name, p.tank, p.skinColor, isEnemySuper);
                 scene.add(enemies[id].group);
             }
-            enemies[id].group.position.set(players[id].x, 0, players[id].z);
-            enemies[id].group.rotation.y = players[id].r;
-            enemies[id].label.innerText = `${players[id].name} (${players[id].tank})`;
-            enemies[id].hp = players[id].hp;
+            enemies[id].group.position.set(p.x || 0, 0, p.z || 0);
+            enemies[id].group.rotation.y = p.r || 0;
+            enemies[id].label.innerText = `${p.name} (${p.tank})`;
+            enemies[id].hp = p.godMode ? 228 : p.hp;
+            enemies[id].team = p.team;
+            enemies[id].name = p.name;
         }
     });
     animate();
 }
 
-function createTank(color, name, tank) {
+function removeMyTankMesh() {
+    if(myTank) {
+        scene.remove(myTank.group);
+        if(myTank.label && myTank.label.parentNode) myTank.label.parentNode.removeChild(myTank.label);
+        myTank = null;
+    }
+}
+
+function handleDeath(killerInfo) {
+    isDead = true;
+    db.ref(`rooms/${roomKey}/players/${myId}`).update({ isDead: true });
+    removeMyTankMesh();
+
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('fire-zone').classList.add('hidden');
+
+    const deathScreen = document.getElementById('screen-death');
+    document.getElementById('death-subtitle').innerText = `${langs[currentLang].killedBy}: ${killerInfo}`;
+    deathScreen.classList.remove('hidden');
+
+    deathTimer1 = setTimeout(() => {
+        deathScreen.classList.add('hidden');
+        
+        const statsScreen = document.getElementById('screen-stats');
+        const survivedSec = Math.floor((Date.now() - matchStats.startTime) / 1000);
+        document.getElementById('val-kills').innerText = matchStats.kills;
+        document.getElementById('val-dmg').innerText = matchStats.damage;
+        document.getElementById('val-time').innerText = `${survivedSec} сек`;
+        statsScreen.classList.remove('hidden');
+
+        deathTimer2 = setTimeout(() => {
+            skipToLobby();
+        }, 5000);
+    }, 5000);
+}
+
+function skipToLobby() {
+    if(deathTimer1) clearTimeout(deathTimer1);
+    if(deathTimer2) clearTimeout(deathTimer2);
+
+    document.getElementById('screen-death').classList.add('hidden');
+    document.getElementById('screen-stats').classList.add('hidden');
+    if(renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+
+    showControls();
+    document.getElementById('screen-prep').classList.remove('hidden');
+    db.ref(`rooms/${roomKey}/players/${myId}`).update({ hp: myData.godMode ? 228 : myData.max, ready: false, isDead: false });
+}
+
+function createTank(color, name, tank, skinColor = "normal", isLongGun = false) {
     const g = new THREE.Group();
-    const b = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.2, 4), new THREE.MeshLambertMaterial({color}));
-    const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), new THREE.MeshLambertMaterial({color}));
+    let mat = new THREE.MeshLambertMaterial({color});
+    let gunMat = new THREE.MeshLambertMaterial({color: 0x111111});
+
+    if (skinColor === "white") {
+        mat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+        gunMat = new THREE.MeshLambertMaterial({color: 0x0088CC});
+    }
+
+    const b = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.2, 4), mat);
+    const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), mat);
     t.position.y = 1;
-    const gun = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3), new THREE.MeshLambertMaterial({color: 0x111}));
-    gun.rotation.x = Math.PI/2; gun.position.z = 1.5;
+
+    const gunLen = isLongGun ? 5 : 3;
+    const gun = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, gunLen), gunMat);
+    gun.rotation.x = Math.PI/2; 
+    gun.position.z = gunLen / 2;
     t.add(gun); g.add(b, t);
+
     const l = document.createElement('div');
     l.className = 'label'; l.innerText = `${name} (${tank})`;
     document.body.appendChild(l);
-    return { group: g, label: l };
+    return { group: g, label: l, materials: [mat], name: name, tankModel: tank, skinColor: skinColor };
 }
 
 document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
-    e.preventDefault(); if(myData.hp <= 0) return;
+    e.preventDefault(); if((myData.hp <= 0 && !myData.godMode) || isDead || !myTank) return;
     const dir = new THREE.Vector3(0,0,1).applyQuaternion(myTank.group.quaternion);
     const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshBasicMaterial({color: 0xFFFF00}));
     bMesh.position.copy(myTank.group.position).add(dir.clone().multiplyScalar(4));
     bMesh.position.y = 1; scene.add(bMesh);
+
     const int = setInterval(() => {
         bMesh.position.add(dir.clone().multiplyScalar(1.6));
         for(let id in enemies) {
-            if(enemies[id].hp > 0 && bMesh.position.distanceTo(enemies[id].group.position) < 3) {
-                db.ref(`rooms/${roomKey}/players/${id}/hp`).transaction(h => Math.max(0, (h || 100) - 100));
+            const enemy = enemies[id];
+            if(enemy.hp > 0 && bMesh.position.distanceTo(enemy.group.position) < 3) {
+                
+                if (!roomSettings.friendlyFire && enemy.team === myData.team) {
+                    clearInterval(int); scene.remove(bMesh); return;
+                }
+
+                const dmg = myData.damage || 100;
+                matchStats.damage += dmg;
+                
+                db.ref(`rooms/${roomKey}/players/${id}`).transaction(p => {
+                    if(!p) return p;
+                    if(p.godMode) return p;
+                    p.hp = Math.max(0, (p.hp || 100) - dmg);
+                    if(p.hp === 0) {
+                        p.killedBy = `${myData.name} (${myData.tank})`;
+                    }
+                    return p;
+                }, (err, committed, snapshot) => {
+                    if(committed && snapshot.val() && snapshot.val().hp === 0) {
+                        matchStats.kills += 1;
+                    }
+                });
+
                 clearInterval(int); scene.remove(bMesh); return;
             }
         }
@@ -380,19 +888,39 @@ nipplejs.create({ zone: document.getElementById('joy-zone'), mode: 'static', pos
 
 function animate() {
     requestAnimationFrame(animate);
-    if(myData.hp > 0 && myTank) {
-        myTank.group.rotation.y += move.r * 0.06;
+    
+    const hue = (performance.now() * 0.0003) % 1;
+    const rainbowHex = new THREE.Color().setHSL(hue, 1, 0.5).getHex();
+
+    const allTanks = Object.values(enemies);
+    if(myTank) allTanks.push(myTank);
+
+    allTanks.forEach(t => {
+        if(!t) return;
+        if(t.name === "AWESOME" || t.skinColor === "awesome") {
+            t.materials.forEach(m => m.color.setHex(rainbowHex));
+            t.label.style.color = "white";
+        }
+    });
+
+    if((myData.hp > 0 || myData.godMode) && myTank && !isDead) {
+        let rotSpeedMultiplier = myData.rotSpeed || 1;
+        myTank.group.rotation.y += move.r * (0.06 * rotSpeedMultiplier);
         myTank.group.translateZ(move.f * myData.speed);
         db.ref(`rooms/${roomKey}/players/${myId}`).update({ x: myTank.group.position.x, z: myTank.group.position.z, r: myTank.group.rotation.y });
     }
-    [...Object.values(enemies), myTank].forEach(t => {
+
+    allTanks.forEach(t => {
         if(!t || !t.group.visible) return;
         const p = t.group.position.clone().setY(4.5).project(camera);
         t.label.style.left = (p.x * .5 + .5) * window.innerWidth + 'px';
         t.label.style.top = (p.y * -.5 + .5) * window.innerHeight + 'px';
     });
-    camera.position.lerp(new THREE.Vector3(myTank.group.position.x - Math.sin(myTank.group.rotation.y)*20, 14, myTank.group.position.z - Math.cos(myTank.group.rotation.y)*20), 0.1);
-    camera.lookAt(myTank.group.position);
+
+    if(myTank) {
+        camera.position.lerp(new THREE.Vector3(myTank.group.position.x - Math.sin(myTank.group.rotation.y)*20, 14, myTank.group.position.z - Math.cos(myTank.group.rotation.y)*20), 0.1);
+        camera.lookAt(myTank.group.position);
+    }
     renderer.render(scene, camera);
 }
 </script>

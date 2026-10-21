@@ -1,4 +1,0 @@
-# assets
-tank
-amogus
-icey

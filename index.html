@@ -61,6 +61,8 @@
         #hud { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; text-align: center; pointer-events: none; }
         #hp-bar { width: 240px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 5px 0; overflow: hidden; }
         #hp-fill { height: 100%; background: #B7F397; width: 100%; transition: 0.2s; }
+        #stealth-indicator { display: none; align-items: center; justify-content: center; color: #B7F397; background: rgba(0,0,0,0.6); width: 30px; height: 30px; border-radius: 50%; margin: 4px auto 0; }
+        #stealth-indicator .material-symbols-outlined { font-size: 22px; font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
         
         #fire-zone { position: fixed; right: 20px; bottom: 20px; width: 120px; height: 120px; z-index: 1000; display: flex; align-items: center; justify-content: center; }
         #fire-btn { width: 80px; height: 80px; border-radius: 50%; background: #B7F397; border: 5px solid rgba(0,0,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
@@ -77,9 +79,36 @@
         .stats-identity { text-align: center; margin: -4px 0 18px; }
         .stats-identity-name { font-size: 20px; font-weight: bold; color: #E2E3DD; }
         .stats-identity-tank { font-size: 13px; color: rgba(226,227,221,0.55); margin-top: 3px; }
+        .bullet-spoiler { margin: 14px 0; border: 1px solid #424940; border-radius: 12px; overflow: hidden; }
+        .bullet-spoiler summary { list-style: none; cursor: pointer; padding: 13px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #242622; font-weight: bold; }
+        .bullet-spoiler summary::-webkit-details-marker { display: none; }
+        .bullet-spoiler summary::after { content: none; }
+        .bullet-spoiler .spoiler-arrow { border-radius: 50%; padding: 4px; background: rgba(226,227,221,.08); transition: transform .25s cubic-bezier(.2,.8,.2,1), background .2s; }
+        .bullet-spoiler[open] .spoiler-arrow { transform: rotate(180deg); background: rgba(183,243,151,.16); }
+        .bullet-spoiler summary:active .spoiler-arrow { background: rgba(183,243,151,.28); }
+        .bullet-color-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; padding: 12px 8px; }
+        .bullet-color-option { min-width: 0; border: 1px solid #424940; background: #1A1C19; color: #E2E3DD; border-radius: 10px; padding: 9px 3px; cursor: pointer; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+        .bullet-color-option.active { border: 2px solid #B7F397; background: #30382D; }
+        .bullet-color-swatch { width: 25px; height: 25px; border-radius: 50%; border: 1px solid rgba(255,255,255,.55); box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+        @media (max-width: 360px) { .bullet-color-options { gap: 4px; padding: 8px 5px; } .bullet-color-option { font-size: 10px; } }
+
+        /* TANKI.MP first-launch splash screen */
+        #splashScreen { position: fixed; inset: 0; z-index: 20000; background-color: #8ceb4d; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background-color 1.5s ease-out, opacity 1s ease; }
+        #splashScreen.splash-hidden { opacity: 0; pointer-events: none; }
+        #splashText { font-size: clamp(42px, 10vw, 80px); font-weight: 700; opacity: 0; transition: opacity 1s, color .5s, font-size .5s; letter-spacing: 2px; margin: 0; text-align: center; }
+        #splashSubtitle { font-size: 16px; color: rgba(31,31,31,.8); margin-top: 16px; opacity: 0; transition: opacity 1s, color .5s; text-align: center; padding: 0 18px; }
+        #splashVersion { position: absolute; top: 16px; left: 16px; font-size: 13px; color: rgba(31,31,31,.55); font-weight: 500; letter-spacing: .5px; }
+        .settings-room-only { display: block; }
+        .settings-room-only.context-hidden { display: none !important; }
     </style>
 </head>
 <body>
+
+<div id="splashScreen" aria-label="TANKI.MP intro">
+    <div id="splashVersion">ver 3.1 build 4</div>
+    <h1 id="splashText"></h1>
+    <p id="splashSubtitle">Танки. Мульплеер, мультикруто!</p>
+</div>
 
 <div id="top-bar" class="top-bar-controls">
     <button id="settings-btn" class="m3-top-btn hidden" onclick="openRoomSettings()">
@@ -141,10 +170,10 @@
     </div>
 </div>
 
-<div id="modal-main-settings" class="modal hidden">
+<div id="modal-settings" class="modal hidden">
     <div class="modal-card">
-        <h2 style="color:#B7F397; margin-top:0;">Настройки</h2>
-        <label for="pref-tank" style="font-size:13px;">Предпочитаемый танк</label>
+        <h2 id="stg-title" style="color:#B7F397; margin-top:0;">Настройки</h2>
+        <label id="pref-tank-label" for="pref-tank" style="font-size:13px;">Предпочитаемый танк</label>
         <select id="pref-tank" class="m3-select">
             <option value="МС-1">МС-1</option>
             <option value="БТ-7">БТ-7</option>
@@ -152,16 +181,10 @@
             <option value="Tiger I">Tiger I</option>
             <option value="Dro X">Dro X</option>
         </select>
-        <label for="pref-nick" style="font-size:13px;">Ник</label>
+        <label id="pref-nick-label" for="pref-nick" style="font-size:13px;">Ник</label>
         <input type="text" id="pref-nick" class="m3-input" placeholder="Твой ник">
-        <button class="m3-btn" onclick="saveMainSettings()">СОХРАНИТЬ</button>
-        <button class="m3-btn" style="background:#424940;color:white" onclick="closeModal('modal-main-settings')">ЗАКРЫТЬ</button>
-    </div>
-</div>
-
-<div id="modal-settings" class="modal hidden">
-    <div class="modal-card">
-        <h2 id="stg-title" style="color:#B7F397; margin-top:0;">Настройки комнаты</h2>
+        <button id="pref-save-btn" class="m3-btn" onclick="saveMainSettings()">СОХРАНИТЬ ПРЕДПОЧТЕНИЯ</button>
+        <div id="settings-room-options" class="settings-room-only context-hidden">
         <div class="toggle-box">
             <span id="stg-ff">Дружеский огонь</span>
             <label class="m3-switch">
@@ -170,6 +193,17 @@
             </label>
         </div>
         <button id="stg-pdata" class="m3-btn" style="background:#424940; color:white" onclick="openPlayerListModal()">Данные игроков</button>
+        </div>
+        <details class="bullet-spoiler" id="bullet-color-spoiler">
+            <summary><span id="bullet-color-heading">Цвет пуль</span><span class="material-symbols-outlined spoiler-arrow" aria-hidden="true">keyboard_arrow_down</span></summary>
+            <div class="bullet-color-options">
+                <button type="button" class="bullet-color-option" data-bullet-color="gray" onclick="selectBulletColor('gray')"><span class="bullet-color-swatch" style="background:#808080"></span><span id="bullet-gray-label">Серый</span></button>
+                <button type="button" class="bullet-color-option" data-bullet-color="yellow" onclick="selectBulletColor('yellow')"><span class="bullet-color-swatch" style="background:#FFFF00"></span><span id="bullet-yellow-label">Жёлтый</span></button>
+                <button type="button" class="bullet-color-option" data-bullet-color="black" onclick="selectBulletColor('black')"><span class="bullet-color-swatch" style="background:#000000"></span><span id="bullet-black-label">Чёрный</span></button>
+                <button type="button" class="bullet-color-option" data-bullet-color="custom" onclick="openCustomBulletColorPicker()"><span class="bullet-color-swatch" id="bullet-custom-swatch" style="background:#00AEEF"></span><span id="bullet-custom-label">Кастомный</span></button>
+            </div>
+            <input type="color" id="bullet-custom-picker" value="#00aeef" aria-label="Custom bullet color" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" onchange="setCustomBulletColor(this.value)">
+        </details>
         <button id="stg-close" class="m3-btn" style="margin-top:15px;" onclick="closeModal('modal-settings')">Закрыть</button>
     </div>
 </div>
@@ -190,8 +224,8 @@
             <hr style="border-color:#424940; margin: 10px 0;">
             <label style="font-size:12px;">Здоровье (150-6000):</label>
             <input type="number" id="padmin-hp" class="m3-input" min="150" max="6000">
-            <label style="font-size:12px;">Урон (10-5000):</label>
-            <input type="number" id="padmin-dmg" class="m3-input" min="10" max="5000">
+            <label style="font-size:12px;">Урон (10-6000):</label>
+            <input type="number" id="padmin-dmg" class="m3-input" min="10" max="6000">
             <label style="font-size:12px;">Скорость поворота (x1-x10):</label>
             <input type="number" id="padmin-rot" class="m3-input" min="1" max="10">
             <label style="font-size:12px;">Цвет:</label>
@@ -235,6 +269,7 @@
 <div id="hud" class="hidden">
     <div id="hp-text" style="font-weight:bold; color:#B7F397">150 / 150</div>
     <div id="hp-bar"><div id="hp-fill"></div></div>
+    <div id="stealth-indicator" aria-label="Маскировка в кустах" title="Маскировка в кустах"><span class="material-symbols-outlined">visibility_off</span></div>
     <div id="hud-name" style="font-size:12px; opacity:0.8">@ Боец</div>
 </div>
 
@@ -255,49 +290,49 @@ const langs = {
     ru: {
         nick: "Твой ник", search: "Поиск битв...", create: "СОЗДАТЬ КОМНАТУ",
         newBattle: "Новая битва", roomName: "Название комнаты", confirm: "ПОДТВЕРДИТЬ",
-        cancel: "ОТМЕНА", lobby: "Лобби", player: "ИГРОК", admin: "АДМИН", superAdmin: "ADMIN YOO",
+        cancel: "ОТМЕНА", lobby: "Лобби", player: "ИГРОК", admin: "АДМИН", superAdmin: "Модератор",
         teamA: "Команда А", teamB: "Команда Б", exit: "ВЫЙТИ", ready: "ГОТОВ",
         unready: "ОТМЕНА", start: "В БОЙ!", delete: "Удалить комнату", 
         delConfirm: "Удалить комнату?", alertNick: "Введите ник!",
         deathTitle: "Вы умерли!", killedBy: "Вас уничтожил", statsTitle: "Результаты боя",
         kills: "Убито:", dmg: "Нанесено урона:", time: "Время жизни:", toHangar: "В МЕНЮ",
-        ppl: "чел.", stgTitle: "Настройки комнаты", stgFF: "Дружеский огонь",
+        ppl: "чел.", prefTank: "Предпочитаемый танк", prefNick: "Ник", prefSave: "СОХРАНИТЬ ПРЕДПОЧТЕНИЯ", bulletColor: "Цвет пуль", bulletGray: "Серый", bulletYellow: "Жёлтый", bulletBlack: "Чёрный", bulletCustom: "Кастомный", stgTitle: "Настройки комнаты", stgFF: "Дружеский огонь",
         stgData: "Данные игроков", stgClose: "Закрыть", plistTitle: "Выберите игрока", plistBack: "Назад"
     },
     en: {
         nick: "Your nickname", search: "Searching battles...", create: "CREATE ROOM",
         newBattle: "New Battle", roomName: "Room Name", confirm: "CONFIRM",
-        cancel: "CANCEL", lobby: "Lobby", player: "PLAYER", admin: "ADMIN", superAdmin: "ADMIN YOO",
+        cancel: "CANCEL", lobby: "Lobby", player: "PLAYER", admin: "ADMIN", superAdmin: "Moderator",
         teamA: "Team A", teamB: "Team B", exit: "EXIT", ready: "READY",
         unready: "CANCEL", start: "FIGHT!", delete: "Delete Room", 
         delConfirm: "Delete room?", alertNick: "Enter nickname!",
         deathTitle: "You died!", killedBy: "Killed by", statsTitle: "Battle Results",
         kills: "Kills:", dmg: "Damage dealt:", time: "Time alive:", toHangar: "TO MENU",
-        ppl: "players", stgTitle: "Room Settings", stgFF: "Friendly Fire",
+        ppl: "players", prefTank: "Preferred tank", prefNick: "Nickname", prefSave: "SAVE PREFERENCES", bulletColor: "Bullet Color", bulletGray: "Gray", bulletYellow: "Yellow", bulletBlack: "Black", bulletCustom: "Custom", stgTitle: "Room Settings", stgFF: "Friendly Fire",
         stgData: "Player Data", stgClose: "Close", plistTitle: "Select Player", plistBack: "Back"
     },
     blitz: {
         nick: "Позывной", search: "В очереди...", create: "В ГАРАЖ",
         newBattle: "Боевая задача", roomName: "Сектор №", confirm: "В БОЙ!",
-        cancel: "ОТСТАВИТЬ", lobby: "Сбор", player: "ТАНКИСТ", admin: "КОМАНДИР", superAdmin: "ADMIN YOO",
+        cancel: "ОТСТАВИТЬ", lobby: "Сбор", player: "ТАНКИСТ", admin: "КОМАНДИР", superAdmin: "Модер",
         teamA: "Союзники", teamB: "Противники", exit: "В АНГАР", ready: "К БОЮ!",
         unready: "ОТСТАВИТЬ", start: "ПОЕХАЛИ!", delete: "Расформировать", 
         delConfirm: "Покинуть позицию?", alertNick: "Сначала позывной!",
         deathTitle: "Тя грохнули!", killedBy: "Уничтожен игроком", statsTitle: "Статы",
         kills: "Грохнуто:", dmg: "Кол-во отскоков:", time: "Время до уничтожения:", toHangar: "В АНГАР",
-        ppl: "людишек", stgTitle: "Читики", stgFF: "Шмалять по союзникам",
+        ppl: "людишек", prefTank: "Предпочитаемый танк", prefNick: "Позывной", prefSave: "СОХРАНИТЬ ПРЕДПОЧТЕНИЯ", bulletColor: "Цвет банок", bulletGray: "Серый", bulletYellow: "Жёлтый", bulletBlack: "Чёрный", bulletCustom: "На выбор", stgTitle: "Читики", stgFF: "Шмалять по союзникам",
         stgData: "Слитые данные", stgClose: "Долой с глаз моих!", plistTitle: "Танкист", plistBack: "Слинять"
     },
     enLol: {
         nick: "Portfoliooo", search: "founding madness...", create: "IN GARAGE",
         newBattle: "Combat mission", roomName: "Sector No.", confirm: "EEE PLAAYY",
-        cancel: "Nah, no", lobby: "Room", player: "IN TANK", admin: "Av. Discord Mod", superAdmin: "ADMIN YOO",
+        cancel: "Nah, no", lobby: "Room", player: "IN TANK", admin: "Av. Discord Mod", superAdmin: "Av. Discord Group Owner",
         teamA: "AAAAAAAA", teamB: "B... bullseye?", exit: "Nah, im leave", ready: "EEEE PLAAYYY",
         unready: "LETS PLAAYYY", start: "GO GO GO GO GOO!!!", delete: "Debloat", 
         delConfirm: "Really?!!", alertNick: "You forgotten your brains!",
         deathTitle: "YOU'VE BEEN SNIPED", killedBy: "LEADER", statsTitle: "Notes",
         kills: "Eaten:", dmg: "Ricochets:", time: "Living time:", toHangar: "Nah, im leave",
-        ppl: "wandering traders", stgTitle: "Super Secret Settings...", stgFF: "DIE, WORST TEAMMATE!!!",
+        ppl: "wandering traders", prefTank: "Preferred tank", prefNick: "Portfoliooo", prefSave: "SAVE PREFERENCES", bulletColor: "Bullet of Color", bulletGray: "Grey", bulletYellow: "Yellow", bulletBlack: "Black", bulletCustom: "Custom", stgTitle: "Super Secret Settings...", stgFF: "DIE, WORST TEAMMATE!!!",
         stgData: "Database", stgClose: "Clear memory and go back", plistTitle: "Human", plistBack: "Turn backwards"
     }
 };
@@ -311,6 +346,7 @@ function setLang(l) {
     document.getElementById('cur-lang-txt').innerText = l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l === 'blitz' ? 'Blitz RU' : 'English lololol';
     document.getElementById('nick-in').placeholder = t.nick;
     document.getElementById('btn-create').innerText = t.create;
+    document.getElementById('btn-main-settings').innerText = l === 'ru' ? 'НАСТРОЙКИ' : l === 'blitz' ? 'НАСТРОЙКИ' : l === 'enLol' ? 'SETTINGS LOL' : 'SETTINGS';
     document.getElementById('create-title').innerText = t.newBattle;
     document.getElementById('room-name-in').placeholder = t.roomName;
     document.getElementById('btn-confirm').innerText = t.confirm;
@@ -318,6 +354,15 @@ function setLang(l) {
     document.getElementById('btn-exit').innerText = t.exit;
     document.getElementById('death-title').innerText = t.deathTitle;
     document.getElementById('stats-title').innerText = t.statsTitle;
+    document.getElementById('pref-tank-label') && (document.getElementById('pref-tank-label').innerText = t.prefTank);
+    document.getElementById('pref-nick-label') && (document.getElementById('pref-nick-label').innerText = t.prefNick);
+    document.getElementById('pref-nick').placeholder = t.nick;
+    document.getElementById('pref-save-btn') && (document.getElementById('pref-save-btn').innerText = t.prefSave);
+    document.getElementById('bullet-color-heading').innerText = t.bulletColor;
+    document.getElementById('bullet-gray-label').innerText = t.bulletGray;
+    document.getElementById('bullet-yellow-label').innerText = t.bulletYellow;
+    document.getElementById('bullet-black-label').innerText = t.bulletBlack;
+    document.getElementById('bullet-custom-label').innerText = t.bulletCustom;
     document.getElementById('lbl-kills').innerText = t.kills;
     document.getElementById('lbl-dmg').innerText = t.dmg;
     document.getElementById('lbl-time').innerText = t.time;
@@ -399,7 +444,47 @@ db.ref('rooms').on('value', s => {
 function openMainSettings() {
     document.getElementById('pref-tank').value = preferredTank;
     document.getElementById('pref-nick').value = document.getElementById('nick-in').value || localStorage.getItem('tanki_saved_nick') || '';
-    document.getElementById('modal-main-settings').classList.remove('hidden');
+    document.getElementById('stg-title').innerText = currentLang === 'ru' ? 'Настройки' : currentLang === 'blitz' ? 'Читики' : currentLang === 'enLol' ? 'Super Secret Settings...' : 'Settings';
+    document.getElementById('settings-room-options').classList.add('context-hidden');
+    refreshBulletColorOptions();
+    document.getElementById('modal-settings').classList.remove('hidden');
+}
+
+const bulletColorPresets = { gray: '#808080', yellow: '#FFFF00', black: '#000000' };
+let bulletColorMode = localStorage.getItem('tanki_bullet_color_mode') || 'yellow';
+let customBulletColor = localStorage.getItem('tanki_bullet_custom_color') || '#00AEEF';
+function getBulletColorForPlayer(name) {
+    const nick = String(name || '').trim().toUpperCase();
+    if (nick === 'ICEY') return '#E6E8EB';
+    if (nick === 'AMOGUS YOO') return '#00DFFF';
+    return bulletColorMode === 'custom' ? customBulletColor : (bulletColorPresets[bulletColorMode] || bulletColorPresets.yellow);
+}
+function getBulletColor() {
+    return getBulletColorForPlayer(myData.name);
+}
+function refreshBulletColorOptions() {
+    document.querySelectorAll('.bullet-color-option').forEach(btn => btn.classList.toggle('active', btn.dataset.bulletColor === bulletColorMode));
+    document.getElementById('bullet-custom-picker').value = customBulletColor;
+    document.getElementById('bullet-custom-swatch').style.background = customBulletColor;
+}
+function selectBulletColor(mode) {
+    bulletColorMode = mode;
+    localStorage.setItem('tanki_bullet_color_mode', mode);
+    refreshBulletColorOptions();
+}
+function openCustomBulletColorPicker() {
+    bulletColorMode = 'custom';
+    localStorage.setItem('tanki_bullet_color_mode', 'custom');
+    refreshBulletColorOptions();
+    document.getElementById('bullet-custom-picker').click();
+}
+function setCustomBulletColor(color) {
+    if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+    customBulletColor = color;
+    bulletColorMode = 'custom';
+    localStorage.setItem('tanki_bullet_custom_color', color);
+    localStorage.setItem('tanki_bullet_color_mode', 'custom');
+    refreshBulletColorOptions();
 }
 
 function saveMainSettings() {
@@ -407,9 +492,14 @@ function saveMainSettings() {
     localStorage.setItem('tanki_preferred_tank', preferredTank);
     const nick = document.getElementById('pref-nick').value;
     localStorage.setItem('tanki_saved_nick', nick);
-    // Only fill the main-menu field; the player can still edit it afterwards.
+    // Keep the main-menu field editable, and also update the current lobby identity.
     document.getElementById('nick-in').value = nick;
-    closeModal('modal-main-settings');
+    if (roomKey && myId && nick.trim()) {
+        myData.name = nick.trim();
+        db.ref(`rooms/${roomKey}/players/${myId}/name`).set(myData.name);
+        if (!gameStarted) applyPreferredTank();
+    }
+    closeModal('modal-settings');
 }
 
 function applyPreferredTank() {
@@ -548,11 +638,8 @@ function openPrep(isNew) {
         roomSettings = data.settings || { friendlyFire: false };
         document.getElementById('ff-toggle').checked = !!roomSettings.friendlyFire;
 
-        if (isAdmin || isSuperAdmin) {
-            document.getElementById('settings-btn').classList.remove('hidden');
-        } else {
-            document.getElementById('settings-btn').classList.add('hidden');
-        }
+        document.getElementById('settings-btn').classList.remove('hidden');
+        document.getElementById('stg-pdata').classList.toggle('hidden', !(isAdmin || isSuperAdmin));
 
         updateLobbyUI(data.players || {});
         if (data.matchResult) handleMatchResult(data.matchResult);
@@ -638,7 +725,15 @@ function updateLobbyUI(players) {
     }
 }
 
-function openRoomSettings() { document.getElementById('modal-settings').classList.remove('hidden'); }
+function openRoomSettings() {
+    document.getElementById('pref-tank').value = preferredTank;
+    document.getElementById('pref-nick').value = document.getElementById('nick-in').value || localStorage.getItem('tanki_saved_nick') || '';
+    document.getElementById('stg-title').innerText = langs[currentLang].stgTitle;
+    document.getElementById('settings-room-options').classList.remove('context-hidden');
+    document.getElementById('stg-pdata').classList.toggle('hidden', !(isAdmin || isSuperAdmin));
+    refreshBulletColorOptions();
+    document.getElementById('modal-settings').classList.remove('hidden');
+}
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 function toggleFriendlyFire(val) {
@@ -702,7 +797,7 @@ function saveAdminPlayerSettings() {
     newMax = Math.max(150, Math.min(6000, newMax));
     
     let newDmg = parseInt(document.getElementById('padmin-dmg').value) || 100;
-    newDmg = Math.max(10, Math.min(5000, newDmg));
+    newDmg = Math.max(10, Math.min(6000, newDmg));
 
     let newRot = parseInt(document.getElementById('padmin-rot').value) || 1;
     newRot = Math.max(1, Math.min(10, newRot));
@@ -743,6 +838,171 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 const enemies = {};
 let myTank = null;
 
+// Игровые объекты карты (хитбоксы, разрушаемые объекты, кусты)
+let staticColliders = []; // Здания, гаражи, барьеры
+let breakables = [];      // Деревья
+let bushes = [];          // Кусты
+
+function buildMap() {
+    // Очистка старой карты при пересъезде
+    staticColliders.forEach(c => scene.remove(c.mesh));
+    breakables.forEach(b => scene.remove(b.mesh));
+    bushes.forEach(b => scene.remove(b.mesh));
+    staticColliders = []; breakables = []; bushes = [];
+
+    // 1. Мрачное освещение и туман (Скайбокс)
+    scene.background = new THREE.Color(0x0a0d12);
+    scene.fog = new THREE.FogExp2(0x0a0d12, 0.012);
+
+    const light = new THREE.DirectionalLight(0x7788aa, 0.8);
+    light.position.set(50, 100, 50);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x222833, 0.7));
+
+    // 2. Земля и Дорожки
+    const groundGeo = new THREE.PlaneGeometry(300, 300);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x1c211a });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // Дорожки
+    const roadMat = new THREE.MeshLambertMaterial({ color: 0x111311 });
+    const mainRoad = new THREE.Mesh(new THREE.PlaneGeometry(300, 12), roadMat);
+    mainRoad.rotation.x = -Math.PI / 2;
+    mainRoad.position.y = 0.01;
+    scene.add(mainRoad);
+
+    const crossRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 300), roadMat);
+    crossRoad.rotation.x = -Math.PI / 2;
+    crossRoad.position.y = 0.01;
+    scene.add(crossRoad);
+
+    // 3. Барьер по краям карты (Стены)
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x050505, transparent: true, opacity: 0.5 });
+    const addWall = (x, z, w, d) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 20, d), wallMat);
+        wall.position.set(x, 10, z);
+        scene.add(wall);
+        staticColliders.push({ box: new THREE.Box3().setFromObject(wall), mesh: wall });
+    };
+    addWall(0, -150, 300, 4);
+    addWall(0, 150, 300, 4);
+    addWall(-150, 0, 4, 300);
+    addWall(150, 0, 4, 300);
+
+    // 4. Большие Дома (Прочные укрытия)
+    const buildingMat = new THREE.MeshLambertMaterial({ color: 0x2b3038 });
+    const addBuilding = (x, z, w, h, d) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), buildingMat);
+        mesh.position.set(x, h / 2, z);
+        scene.add(mesh);
+        staticColliders.push({ box: new THREE.Box3().setFromObject(mesh), mesh: mesh });
+    };
+
+    addBuilding(-40, -40, 20, 15, 30);
+    addBuilding(40, -40, 20, 15, 30);
+    addBuilding(-40, 40, 25, 20, 25);
+    addBuilding(40, 40, 25, 20, 25);
+
+    // 5. Гаражи (Прижатые к земле)
+    const garageMat = new THREE.MeshLambertMaterial({ color: 0x3d271d });
+    const addGarage = (x, z, r = 0) => {
+        const group = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 10), garageMat);
+        base.position.y = 2;
+        group.add(base);
+        group.position.set(x, 0, z);
+        group.rotation.y = r;
+        scene.add(group);
+        staticColliders.push({ box: new THREE.Box3().setFromObject(group), mesh: group });
+    };
+
+    for(let i = 0; i < 4; i++) {
+        addGarage(-80 + i * 9, -15, 0);
+        addGarage(50 + i * 9, 15, Math.PI);
+    }
+
+    // 6. Разрушаемые Деревья
+    const treeTrunkMat = new THREE.MeshLambertMaterial({ color: 0x24170d });
+    const treeLeavesMat = new THREE.MeshLambertMaterial({ color: 0x0f2413 });
+    const addTree = (x, z) => {
+        const group = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 5), treeTrunkMat);
+        trunk.position.y = 2.5;
+        const leaves = new THREE.Mesh(new THREE.ConeGeometry(3, 7, 6), treeLeavesMat);
+        leaves.position.y = 6;
+        group.add(trunk, leaves);
+        group.position.set(x, 0, z);
+        scene.add(group);
+
+        breakables.push({ 
+            mesh: group, 
+            box: new THREE.Box3().setFromObject(group), 
+            x: x, z: z, 
+            broken: false 
+        });
+    };
+
+    // Лесополосы
+    for(let i = 0; i < 15; i++) {
+        addTree(-100 + Math.random()*50, -60 + Math.random()*120);
+        addTree(50 + Math.random()*50, -60 + Math.random()*120);
+    }
+
+    // 7. Фонари (разрушаемые; после падения свет выключается)
+    const addLantern = (x, z) => {
+        const group = new THREE.Group();
+        const poleMat = new THREE.MeshLambertMaterial({ color: 0x343a3e });
+        const shadeMat = new THREE.MeshLambertMaterial({ color: 0x252a2d });
+        const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe6a1 });
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 6, 8), poleMat);
+        pole.position.y = 3;
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 0.16), poleMat);
+        arm.position.set(0.55, 5.7, 0);
+        const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.8, 0.35, 8), shadeMat);
+        shade.position.set(1.05, 5.45, 0);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), bulbMat);
+        bulb.position.set(1.05, 5.1, 0);
+        const pointLight = new THREE.PointLight(0xffd987, 1.8, 24, 2);
+        pointLight.position.set(1.05, 5.05, 0);
+        group.add(pole, arm, shade, bulb, pointLight);
+        group.position.set(x, 0, z);
+        scene.add(group);
+        const box = new THREE.Box3().setFromObject(group);
+        breakables.push({ type: 'lantern', mesh: group, box, x, z, broken: false, light: pointLight, bulbMaterial: bulbMat });
+    };
+    // Фонари вдоль дорог и вокруг зданий
+    [[-70,-32],[-45,-8],[-15,-32],[15,32],[45,8],[70,32],[-70,32],[70,-32],[-10,58],[10,-58]].forEach(([x,z]) => addLantern(x,z));
+
+    // 8. Кусты (Зоны маскировки)
+    const bushMat = new THREE.MeshLambertMaterial({ color: 0x142b11, transparent: true, opacity: 0.85 });
+    const addBush = (x, z) => {
+        const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(3.5), bushMat);
+        mesh.position.set(x, 1, z);
+        mesh.scale.set(1.2, 0.5, 1.2);
+        scene.add(mesh);
+        bushes.push({ x: x, z: z, r: 3.5 });
+    };
+
+    addBush(-20, -15); addBush(-25, -20);
+    addBush(20, 15); addBush(25, 20);
+    addBush(0, -60); addBush(0, 60);
+}
+
+
+function breakMapObject(obj) {
+    if (!obj || obj.broken) return;
+    obj.broken = true;
+    obj.mesh.rotation.x = Math.PI / 2.2;
+    obj.mesh.position.y = 0.5;
+    if (obj.type === 'lantern') {
+        if (obj.light) obj.light.intensity = 0;
+        if (obj.bulbMaterial) obj.bulbMaterial.color.setHex(0x292929);
+        // Выключенная лампа больше не излучает свет.
+    }
+}
+
 function startBattle() {
     hideControls();
     isDead = false;
@@ -757,6 +1017,8 @@ function startBattle() {
     document.getElementById('death-title').style.color = '#F2B8B5';
     document.getElementById('death-subtitle').innerText = '';
     document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('stealth-indicator').style.display = 'none';
+    myData.inBush = false;
     document.getElementById('fire-zone').classList.remove('hidden');
 
     const hudName = document.getElementById('hud-name');
@@ -768,14 +1030,7 @@ function startBattle() {
 
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-    scene.background = new THREE.Color(0x1A1C19);
-    
-    if(scene.children.length === 0) {
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color: 0x242622}));
-        floor.rotation.x = -Math.PI/2;
-        scene.add(floor);
-    }
+    buildMap();
     
     if(myTank) {
         scene.remove(myTank.group);
@@ -785,15 +1040,15 @@ function startBattle() {
     myTank = createTank(0x4E6343, myData.name, myData.tank, myData.skinColor, isSuperAdmin);
     scene.add(myTank.group);
     myTank.group.visible = true;
-    myTank.group.position.set(myData.team === "A" ? -20 : 20, 0, Math.random()*20-10);
+    myTank.group.position.set(myData.team === "A" ? -80 : 80, 0, Math.random()*20-10);
 
-    db.ref(`rooms/${roomKey}/players/${myId}`).update({ hp: myData.godMode ? 228 : myData.max, isDead: false });
+    db.ref(`rooms/${roomKey}/players/${myId}`).update({ hp: myData.godMode ? 228 : myData.max, isDead: false, inBush: false });
     
     db.ref(`rooms/${roomKey}/players`).on('value', snap => {
         const players = snap.val(); if(!players) return;
         
         for(let id in enemies) {
-            if(!players[id]) {
+            if(!players[id] && !enemies[id].isNpc) {
                 scene.remove(enemies[id].group);
                 if(enemies[id].label && enemies[id].label.parentNode) enemies[id].label.parentNode.removeChild(enemies[id].label);
                 delete enemies[id];
@@ -836,8 +1091,19 @@ function startBattle() {
             enemies[id].hp = p.godMode ? 228 : p.hp;
             enemies[id].team = p.team;
             enemies[id].name = p.name;
+            enemies[id].inBush = !!p.inBush;
+            // Противники в кустах скрыты; союзники остаются видимыми.
+            if (enemies[id].inBush && enemies[id].team !== myData.team) {
+                enemies[id].group.visible = false;
+                enemies[id].label.style.opacity = "0";
+            } else {
+                enemies[id].group.visible = true;
+                enemies[id].label.style.opacity = "1";
+            }
         }
     });
+    attachRemoteBulletListener();
+    spawnRunYooNpcs();
     animate();
 }
 
@@ -953,7 +1219,10 @@ function createTank(color, name, tank, skinColor = "normal", isLongGun = false) 
     let mat = new THREE.MeshLambertMaterial({color});
     let gunMat = new THREE.MeshLambertMaterial({color: 0x111111});
 
-    if (skinColor === "white" || String(name).trim().toUpperCase() === "ICEY") {
+    if (String(name).trim().toUpperCase() === "AMOGUS YOO") {
+        mat = new THREE.MeshLambertMaterial({color: 0xFF2020});
+        gunMat = new THREE.MeshLambertMaterial({color: 0x145BFF});
+    } else if (skinColor === "white" || String(name).trim().toUpperCase() === "ICEY") {
         mat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
         gunMat = new THREE.MeshLambertMaterial({color: 0x0088CC});
     }
@@ -977,19 +1246,59 @@ function createTank(color, name, tank, skinColor = "normal", isLongGun = false) 
 
 document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
     e.preventDefault(); if((myData.hp <= 0 && !myData.godMode) || isDead || !myTank) return;
+    // Выстрел снимает маскировку в кустах.
+    if (myData.inBush) {
+        myData.inBush = false;
+        document.getElementById('stealth-indicator').style.display = 'none';
+        db.ref(`rooms/${roomKey}/players/${myId}/inBush`).set(false);
+    }
     const dir = new THREE.Vector3(0,0,1).applyQuaternion(myTank.group.quaternion);
-    const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshBasicMaterial({color: 0xFFFF00}));
+    const bulletId = db.ref(`rooms/${roomKey}/bullets`).push().key;
+    const shooterName = String(myData.name || '');
+    const isRainbowBullet = shooterName.trim().toUpperCase() === 'AWESOME';
+    const bulletMaterial = new THREE.MeshBasicMaterial({color: getBulletColorForPlayer(shooterName)});
+    const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3), bulletMaterial);
     bMesh.position.copy(myTank.group.position).add(dir.clone().multiplyScalar(4));
     bMesh.position.y = 1; scene.add(bMesh);
+    if (bulletId) {
+        db.ref(`rooms/${roomKey}/bullets/${bulletId}`).set({
+            shooterId: myId, shooterName, color: getBulletColorForPlayer(shooterName),
+            x: bMesh.position.x, y: bMesh.position.y, z: bMesh.position.z,
+            dx: dir.x, dy: dir.y, dz: dir.z, createdAt: Date.now()
+        });
+    }
 
     const int = setInterval(() => {
+        if (isRainbowBullet) {
+            const rainbowHue = (performance.now() * 0.0003) % 1;
+            bulletMaterial.color.setHSL(rainbowHue, 1, 0.5);
+            if (bulletId) db.ref(`rooms/${roomKey}/bullets/${bulletId}/color`).set('#' + bulletMaterial.color.getHexString());
+        }
         bMesh.position.add(dir.clone().multiplyScalar(1.6));
+        const bPos = bMesh.position;
+        // Пули останавливаются о стены, здания и гаражи.
+        for (const col of staticColliders) {
+            if (col.box.containsPoint(bPos)) {
+                clearInterval(int); scene.remove(bMesh);
+                if (bulletId) db.ref(`rooms/${roomKey}/bullets/${bulletId}`).remove();
+                return;
+            }
+        }
+        // Попадание по дереву или фонарю ломает объект; у фонаря гаснет свет.
+        for (const obj of breakables) {
+            if (!obj.broken && bPos.distanceTo(obj.mesh.position) < (obj.type === 'lantern' ? 2.2 : 2.5)) {
+                breakMapObject(obj);
+                clearInterval(int); scene.remove(bMesh);
+                if (bulletId) db.ref(`rooms/${roomKey}/bullets/${bulletId}`).remove();
+                return;
+            }
+        }
         for(let id in enemies) {
             const enemy = enemies[id];
             if(enemy.hp > 0 && bMesh.position.distanceTo(enemy.group.position) < 3) {
                 
                 if (!roomSettings.friendlyFire && enemy.team === myData.team) {
-                    clearInterval(int); scene.remove(bMesh); return;
+                    clearInterval(int); scene.remove(bMesh); if (bulletId) db.ref(`rooms/${roomKey}/bullets/${bulletId}`).remove(); return;
                 }
 
                 const dmg = myData.damage || 100;
@@ -1009,10 +1318,10 @@ document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
                     }
                 });
 
-                clearInterval(int); scene.remove(bMesh); return;
+                clearInterval(int); scene.remove(bMesh); if (bulletId) db.ref(`rooms/${roomKey}/bullets/${bulletId}`).remove(); return;
             }
         }
-        if(bMesh.position.length() > 500) { clearInterval(int); scene.remove(bMesh); }
+        if(bMesh.position.length() > 500) { clearInterval(int); scene.remove(bMesh); if (bulletId) db.ref(`rooms/${roomKey}/bullets/${bulletId}`).remove(); }
     }, 30);
 });
 
@@ -1020,6 +1329,86 @@ let move = { f: 0, r: 0 };
 nipplejs.create({ zone: document.getElementById('joy-zone'), mode: 'static', position: {left: '80px', bottom: '80px'} })
 .on('move', (e, d) => { move.f = d.vector.y; move.r = -d.vector.x; })
 .on('end', () => move = { f: 0, r: 0 });
+
+
+const remoteBullets = {};
+let remoteBulletsListenerRoom = null;
+function attachRemoteBulletListener() {
+    if (!roomKey || remoteBulletsListenerRoom === roomKey) return;
+    remoteBulletsListenerRoom = roomKey;
+    db.ref(`rooms/${roomKey}/bullets`).on('child_added', snap => {
+        const data = snap.val();
+        if (!data || data.shooterId === myId || !scene) return;
+        const id = snap.key;
+        const mat = new THREE.MeshBasicMaterial({color: data.color || '#FFFF00'});
+        const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.3), mat);
+        mesh.position.set(data.x || 0, data.y || 1, data.z || 0);
+        scene.add(mesh);
+        const dir = new THREE.Vector3(data.dx || 0, data.dy || 0, data.dz || 1);
+        const state = {mesh, mat, dir, shooterName: data.shooterName || '', alive: true};
+        remoteBullets[id] = state;
+        const bulletRef = db.ref(`rooms/${roomKey}/bullets/${id}`);
+        const colorListener = bulletRef.child('color').on('value', cs => {
+            if (cs.val() && !state.shooterName.trim().toUpperCase().includes('AWESOME')) mat.color.set(cs.val());
+        });
+        state.colorListener = colorListener;
+        state.interval = setInterval(() => {
+            if (!remoteBullets[id]) return;
+            if (state.shooterName.trim().toUpperCase() === 'AWESOME') {
+                const hue = (performance.now() * 0.0003) % 1;
+                mat.color.setHSL(hue, 1, 0.5);
+            }
+            mesh.position.add(dir.clone().multiplyScalar(1.6));
+            if (mesh.position.length() > 500) bulletRef.remove();
+        }, 30);
+        bulletRef.on('value', current => {
+            if (!current.exists() && remoteBullets[id]) {
+                clearInterval(state.interval);
+                scene.remove(mesh);
+                mat.dispose();
+                delete remoteBullets[id];
+                bulletRef.off('value');
+                bulletRef.child('color').off('value', colorListener);
+            }
+        });
+    });
+    db.ref(`rooms/${roomKey}/bullets`).on('child_removed', snap => {
+        const state = remoteBullets[snap.key];
+        if (state) {
+            clearInterval(state.interval);
+            scene.remove(state.mesh);
+            state.mat.dispose();
+            delete remoteBullets[snap.key];
+        }
+    });
+}
+
+const RUN_YOO_NPC_NAMES = [
+    'PeanutButter228','SaltedMafia42','xX_MAKS_Xx','DogG_123','123qwe456rty',
+    'TankiMP4All','BreadKvasPro','Noob','Pro','Cheater1488','Cheater42',
+    'Cheater52','Minceraft','Dodo444odoD'
+];
+function spawnRunYooNpcs() {
+    if (String(roomKey || '').trim().toUpperCase() !== 'RUN YOO' ||
+        String(myData.name || '').trim().toUpperCase() !== 'AMOGUS YOO' ||
+        window.__runYooNpcsSpawned || !scene) return;
+    window.__runYooNpcsSpawned = true;
+    const names = RUN_YOO_NPC_NAMES.slice().sort(() => Math.random() - 0.5).slice(0, 9);
+    const foxNum = 37 + Math.floor(Math.random() * 50);
+    names.push('SmoothFox' + foxNum);
+    names.sort(() => Math.random() - 0.5);
+    names.forEach((name, i) => {
+        const npc = createTank(0xFF2020, name, 'МС-1', 'normal', false);
+        npc.group.position.set((i % 5) * 12 - 24, 0, Math.floor(i / 5) * 14 - 8);
+        npc.hp = 1000;
+        npc.max = 1000;
+        npc.team = myData.team === 'A' ? 'B' : 'A';
+        npc.isNpc = true;
+        npc.npcName = name;
+        scene.add(npc.group);
+        enemies['npc_' + i] = npc;
+    });
+}
 
 function animate() {
     requestAnimationFrame(animate);
@@ -1044,7 +1433,35 @@ function animate() {
     if((myData.hp > 0 || myData.godMode) && myTank && !isDead) {
         let rotSpeedMultiplier = myData.rotSpeed || 1;
         myTank.group.rotation.y += move.r * (0.06 * rotSpeedMultiplier);
+
+        // Сохраняем позицию до движения, чтобы вернуть танк при столкновении.
+        const oldPos = myTank.group.position.clone();
         myTank.group.translateZ(move.f * myData.speed);
+        const tankBox = new THREE.Box3().setFromObject(myTank.group);
+        let collided = false;
+        for (const col of staticColliders) {
+            if (col.box.intersectsBox(tankBox)) { collided = true; break; }
+        }
+        // Деревья и фонари имеют хитбоксы и падают при таране.
+        for (const obj of breakables) {
+            if (!obj.broken && tankBox.intersectsBox(obj.box)) breakMapObject(obj);
+        }
+        if (collided) myTank.group.position.copy(oldPos);
+
+        // Кусты маскируют танк и передают состояние другим игрокам.
+        let currentlyInBush = false;
+        for (const bush of bushes) {
+            if (Math.hypot(myTank.group.position.x - bush.x, myTank.group.position.z - bush.z) < bush.r) {
+                currentlyInBush = true;
+                break;
+            }
+        }
+        if (currentlyInBush !== !!myData.inBush) {
+            myData.inBush = currentlyInBush;
+            document.getElementById('stealth-indicator').style.display = currentlyInBush ? 'inline-flex' : 'none';
+            db.ref(`rooms/${roomKey}/players/${myId}/inBush`).set(currentlyInBush);
+        }
+
         db.ref(`rooms/${roomKey}/players/${myId}`).update({ x: myTank.group.position.x, z: myTank.group.position.z, r: myTank.group.rotation.y });
     }
 
@@ -1061,6 +1478,51 @@ function animate() {
     }
     renderer.render(scene, camera);
 }
+
+function initializeSplash() {
+    const splashText = document.getElementById('splashText');
+    const splashSubtitle = document.getElementById('splashSubtitle');
+    const splashScreen = document.getElementById('splashScreen');
+    const fullWord = 'TANKI.MP';
+    let currentWord = '';
+    let index = 0;
+    const typeText = setInterval(() => {
+        if (index < fullWord.length) {
+            currentWord += fullWord[index];
+            splashText.textContent = currentWord;
+            splashText.style.opacity = 1;
+            index++;
+        } else {
+            clearInterval(typeText);
+            splashScreen.style.backgroundColor = '#8ceb4d';
+            setTimeout(() => {
+                splashScreen.style.backgroundColor = '#8ceb4d';
+                splashText.style.color = '#1F1F1F';
+                splashText.style.fontSize = '40px';
+                splashSubtitle.style.color = '#424242';
+                splashSubtitle.style.opacity = 1;
+                setTimeout(() => {
+                    splashText.style.opacity = 0;
+                    splashSubtitle.style.opacity = 0;
+                    setTimeout(() => {
+                        splashScreen.classList.add('splash-hidden');
+                        setTimeout(() => splashScreen.remove(), 1000);
+                        localStorage.setItem('tanki_splash_seen', '1');
+                    }, 1000);
+                }, 2000);
+            }, 1000);
+        }
+    }, 150);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const splashScreen = document.getElementById('splashScreen');
+    if (localStorage.getItem('tanki_splash_seen') === '1') {
+        splashScreen.remove();
+        return;
+    }
+    initializeSplash();
+});
 </script>
 </body>
 </html>

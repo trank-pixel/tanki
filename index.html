@@ -98,6 +98,16 @@
         #splashText { font-size: clamp(42px, 10vw, 80px); font-weight: 700; opacity: 0; transition: opacity 1s, color .5s, font-size .5s; letter-spacing: 2px; margin: 0; text-align: center; }
         #splashSubtitle { font-size: 16px; color: rgba(31,31,31,.8); margin-top: 16px; opacity: 0; transition: opacity 1s, color .5s; text-align: center; padding: 0 18px; }
         #splashVersion { position: absolute; top: 16px; left: 16px; font-size: 13px; color: rgba(31,31,31,.55); font-weight: 500; letter-spacing: .5px; }
+        .camera-options { padding: 12px 8px; display: flex; flex-direction: column; gap: 10px; }
+        .camera-mode-options, .crosshair-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+        .crosshair-options { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .camera-setting-label { color: #E2E3DD; font-size: 12px; font-weight: 600; margin: 2px 2px 0; }
+        .camera-option { min-width: 0; border: 1px solid #424940; background: #1A1C19; color: #E2E3DD; border-radius: 10px; padding: 10px 3px; cursor: pointer; font-size: 11px; }
+        .camera-option.active { border: 2px solid #B7F397; background: #30382D; }
+        .camera-option:disabled { opacity: .38; cursor: not-allowed; border-color: #424940; background: #242622; }
+        #game-crosshair { position: fixed; z-index: 9500; left: 50%; top: 50%; transform: translate(-50%,-50%); color: white; pointer-events: none; font: 24px/1 Arial,sans-serif; text-shadow: 0 1px 3px #000, 0 0 4px #000; display: none; }
+        #game-crosshair.visible { display: block; }
+        #game-crosshair.dot { width: 5px; height: 5px; border-radius: 50%; background: white; font-size: 0; box-shadow: 0 0 3px #000; }
         .settings-room-only { display: block; }
         .settings-room-only.context-hidden { display: none !important; }
     </style>
@@ -105,7 +115,7 @@
 <body>
 
 <div id="splashScreen" aria-label="TANKI.MP intro">
-    <div id="splashVersion">ver 3.1 build 4</div>
+    <div id="splashVersion">ver 3.1 build 7</div>
     <h1 id="splashText"></h1>
     <p id="splashSubtitle">Танки. Мульплеер, мультикруто!</p>
 </div>
@@ -170,6 +180,8 @@
     </div>
 </div>
 
+<div id="game-crosshair" aria-hidden="true">+</div>
+
 <div id="modal-settings" class="modal hidden">
     <div class="modal-card">
         <h2 id="stg-title" style="color:#B7F397; margin-top:0;">Настройки</h2>
@@ -203,6 +215,25 @@
                 <button type="button" class="bullet-color-option" data-bullet-color="custom" onclick="openCustomBulletColorPicker()"><span class="bullet-color-swatch" id="bullet-custom-swatch" style="background:#00AEEF"></span><span id="bullet-custom-label">Кастомный</span></button>
             </div>
             <input type="color" id="bullet-custom-picker" value="#00aeef" aria-label="Custom bullet color" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" onchange="setCustomBulletColor(this.value)">
+        </details>
+        <details class="bullet-spoiler" id="camera-spoiler">
+            <summary><span id="camera-heading">Вид камеры</span><span class="material-symbols-outlined spoiler-arrow" aria-hidden="true">keyboard_arrow_down</span></summary>
+            <div class="camera-options">
+                <div class="camera-mode-options">
+                    <button type="button" class="camera-option" data-camera-mode="first" onclick="selectCameraMode('first')"><span id="camera-first-label">1 лицо</span></button>
+                    <button type="button" class="camera-option" data-camera-mode="third" onclick="selectCameraMode('third')"><span id="camera-third-label">3 лицо</span></button>
+                    <button type="button" class="camera-option" data-camera-mode="top" onclick="selectCameraMode('top')"><span id="camera-top-label">Вид сверху</span></button>
+                </div>
+                <details class="bullet-spoiler" id="crosshair-spoiler" style="margin:0;">
+                    <summary><span id="crosshair-heading">Стиль перекрестия</span><span class="material-symbols-outlined spoiler-arrow" aria-hidden="true">keyboard_arrow_down</span></summary>
+                    <div class="crosshair-options">
+                        <button type="button" class="camera-option" data-crosshair-style="dot" onclick="selectCrosshairStyle('dot')"><span id="crosshair-dot-label">Точка</span></button>
+                        <button type="button" class="camera-option" data-crosshair-style="standard" onclick="selectCrosshairStyle('standard')"><span id="crosshair-standard-label">Стандарт (+)</span></button>
+                        <button type="button" class="camera-option" data-crosshair-style="none" onclick="selectCrosshairStyle('none')"><span id="crosshair-none-label">Нет</span></button>
+                        <button type="button" class="camera-option" data-crosshair-style="cross" onclick="selectCrosshairStyle('cross')"><span id="crosshair-cross-label">Крест (×)</span></button>
+                    </div>
+                </details>
+            </div>
         </details>
         <button id="stg-close" class="m3-btn" style="margin-top:15px;" onclick="closeModal('modal-settings')">Закрыть</button>
     </div>
@@ -296,7 +327,7 @@ const langs = {
         delConfirm: "Удалить комнату?", alertNick: "Введите ник!",
         deathTitle: "Вы умерли!", killedBy: "Вас уничтожил", statsTitle: "Результаты боя",
         kills: "Убито:", dmg: "Нанесено урона:", time: "Время жизни:", toHangar: "В МЕНЮ",
-        ppl: "чел.", prefTank: "Предпочитаемый танк", prefNick: "Ник", prefSave: "СОХРАНИТЬ ПРЕДПОЧТЕНИЯ", bulletColor: "Цвет пуль", bulletGray: "Серый", bulletYellow: "Жёлтый", bulletBlack: "Чёрный", bulletCustom: "Кастомный", stgTitle: "Настройки комнаты", stgFF: "Дружеский огонь",
+        ppl: "чел.", prefTank: "Предпочитаемый танк", prefNick: "Ник", prefSave: "СОХРАНИТЬ ПРЕДПОЧТЕНИЯ", bulletColor: "Цвет пуль", bulletGray: "Серый", bulletYellow: "Жёлтый", bulletBlack: "Чёрный", bulletCustom: "Кастомный", cameraHeading: "Вид камеры", cameraFirst: "1 лицо", cameraThird: "3 лицо", cameraTop: "Вид сверху", crosshairHeading: "Стиль перекрестия", crosshairDot: "Точка", crosshairStandard: "Стандарт (+)", crosshairNone: "Нет", crosshairCross: "Крест (×)", stgTitle: "Настройки комнаты", stgFF: "Дружеский огонь",
         stgData: "Данные игроков", stgClose: "Закрыть", plistTitle: "Выберите игрока", plistBack: "Назад"
     },
     en: {
@@ -308,7 +339,7 @@ const langs = {
         delConfirm: "Delete room?", alertNick: "Enter nickname!",
         deathTitle: "You died!", killedBy: "Killed by", statsTitle: "Battle Results",
         kills: "Kills:", dmg: "Damage dealt:", time: "Time alive:", toHangar: "TO MENU",
-        ppl: "players", prefTank: "Preferred tank", prefNick: "Nickname", prefSave: "SAVE PREFERENCES", bulletColor: "Bullet Color", bulletGray: "Gray", bulletYellow: "Yellow", bulletBlack: "Black", bulletCustom: "Custom", stgTitle: "Room Settings", stgFF: "Friendly Fire",
+        ppl: "players", prefTank: "Preferred tank", prefNick: "Nickname", prefSave: "SAVE PREFERENCES", bulletColor: "Bullet Color", bulletGray: "Gray", bulletYellow: "Yellow", bulletBlack: "Black", bulletCustom: "Custom", cameraHeading: "Camera View", cameraFirst: "First Person", cameraThird: "Third Person", cameraTop: "Top View", crosshairHeading: "Crosshair Style", crosshairDot: "Dot", crosshairStandard: "Standard (+)", crosshairNone: "None", crosshairCross: "Cross (×)", stgTitle: "Room Settings", stgFF: "Friendly Fire",
         stgData: "Player Data", stgClose: "Close", plistTitle: "Select Player", plistBack: "Back"
     },
     blitz: {
@@ -320,7 +351,7 @@ const langs = {
         delConfirm: "Покинуть позицию?", alertNick: "Сначала позывной!",
         deathTitle: "Тя грохнули!", killedBy: "Уничтожен игроком", statsTitle: "Статы",
         kills: "Грохнуто:", dmg: "Кол-во отскоков:", time: "Время до уничтожения:", toHangar: "В АНГАР",
-        ppl: "людишек", prefTank: "Предпочитаемый танк", prefNick: "Позывной", prefSave: "СОХРАНИТЬ ПРЕДПОЧТЕНИЯ", bulletColor: "Цвет банок", bulletGray: "Серый", bulletYellow: "Жёлтый", bulletBlack: "Чёрный", bulletCustom: "На выбор", stgTitle: "Читики", stgFF: "Шмалять по союзникам",
+        ppl: "людишек", prefTank: "Предпочитаемый танк", prefNick: "Позывной", prefSave: "СОХРАНИТЬ ПРЕДПОЧТЕНИЯ", bulletColor: "Цвет банок", bulletGray: "Серый", bulletYellow: "Жёлтый", bulletBlack: "Чёрный", bulletCustom: "На выбор", cameraHeading: "Где кемперит оператор", cameraFirst: "От меня", cameraThird: "Сзади", cameraTop: "С дрона", crosshairHeading: "Стиль прицела", crosshairDot: "Точка", crosshairStandard: "По умолчанию (+)", crosshairNone: "Нет", crosshairCross: "Крестик (×)", stgTitle: "Читики", stgFF: "Шмалять по союзникам",
         stgData: "Слитые данные", stgClose: "Долой с глаз моих!", plistTitle: "Танкист", plistBack: "Слинять"
     },
     enLol: {
@@ -332,7 +363,7 @@ const langs = {
         delConfirm: "Really?!!", alertNick: "You forgotten your brains!",
         deathTitle: "YOU'VE BEEN SNIPED", killedBy: "LEADER", statsTitle: "Notes",
         kills: "Eaten:", dmg: "Ricochets:", time: "Living time:", toHangar: "Nah, im leave",
-        ppl: "wandering traders", prefTank: "Preferred tank", prefNick: "Portfoliooo", prefSave: "SAVE PREFERENCES", bulletColor: "Bullet of Color", bulletGray: "Grey", bulletYellow: "Yellow", bulletBlack: "Black", bulletCustom: "Custom", stgTitle: "Super Secret Settings...", stgFF: "DIE, WORST TEAMMATE!!!",
+        ppl: "wandering traders", prefTank: "Preferred tank", prefNick: "Portfoliooo", prefSave: "SAVE PREFERENCES", bulletColor: "Bullet of Color", bulletGray: "Grey", bulletYellow: "Yellow", bulletBlack: "Black", bulletCustom: "Custom", cameraHeading: "Where is the photoshop tag?", cameraFirst: "Myself", cameraThird: "Backdoor", cameraTop: "In the sky", crosshairHeading: "CrossHAIR (stylish!)", crosshairDot: "Dot.", crosshairStandard: "By (de)fault (+)", crosshairNone: "Nothing", crosshairCross: "xxx", stgTitle: "Super Secret Settings...", stgFF: "DIE, WORST TEAMMATE!!!",
         stgData: "Database", stgClose: "Clear memory and go back", plistTitle: "Human", plistBack: "Turn backwards"
     }
 };
@@ -363,6 +394,16 @@ function setLang(l) {
     document.getElementById('bullet-yellow-label').innerText = t.bulletYellow;
     document.getElementById('bullet-black-label').innerText = t.bulletBlack;
     document.getElementById('bullet-custom-label').innerText = t.bulletCustom;
+    document.getElementById('camera-heading').innerText = t.cameraHeading;
+    document.getElementById('camera-first-label').innerText = t.cameraFirst;
+    document.getElementById('camera-third-label').innerText = t.cameraThird;
+    document.getElementById('camera-top-label').innerText = t.cameraTop;
+    document.getElementById('crosshair-heading').innerText = t.crosshairHeading;
+    document.getElementById('crosshair-dot-label').innerText = t.crosshairDot;
+    document.getElementById('crosshair-standard-label').innerText = t.crosshairStandard;
+    document.getElementById('crosshair-none-label').innerText = t.crosshairNone;
+    document.getElementById('crosshair-cross-label').innerText = t.crosshairCross;
+    refreshCameraOptions();
     document.getElementById('lbl-kills').innerText = t.kills;
     document.getElementById('lbl-dmg').innerText = t.dmg;
     document.getElementById('lbl-time').innerText = t.time;
@@ -447,6 +488,7 @@ function openMainSettings() {
     document.getElementById('stg-title').innerText = currentLang === 'ru' ? 'Настройки' : currentLang === 'blitz' ? 'Читики' : currentLang === 'enLol' ? 'Super Secret Settings...' : 'Settings';
     document.getElementById('settings-room-options').classList.add('context-hidden');
     refreshBulletColorOptions();
+    refreshCameraOptions();
     document.getElementById('modal-settings').classList.remove('hidden');
 }
 
@@ -487,6 +529,36 @@ function setCustomBulletColor(color) {
     refreshBulletColorOptions();
 }
 
+let cameraMode = localStorage.getItem('tanki_camera_mode') || 'third';
+let crosshairStyle = localStorage.getItem('tanki_crosshair_style') || 'standard';
+function refreshCameraOptions() {
+    document.querySelectorAll('[data-camera-mode]').forEach(btn => btn.classList.toggle('active', btn.dataset.cameraMode === cameraMode));
+    document.querySelectorAll('[data-crosshair-style]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.crosshairStyle === crosshairStyle);
+        btn.disabled = cameraMode === 'third';
+    });
+    const crosshair = document.getElementById('game-crosshair');
+    if (crosshair) {
+        crosshair.className = '';
+        crosshair.textContent = crosshairStyle === 'dot' ? '' : crosshairStyle === 'cross' ? '×' : '+';
+        if (cameraMode !== 'third' && crosshairStyle !== 'none') {
+            crosshair.classList.add('visible');
+            if (crosshairStyle === 'dot') crosshair.classList.add('dot');
+        }
+    }
+}
+function selectCameraMode(mode) {
+    if (!['first','third','top'].includes(mode)) return;
+    cameraMode = mode;
+    localStorage.setItem('tanki_camera_mode', mode);
+    refreshCameraOptions();
+}
+function selectCrosshairStyle(style) {
+    if (cameraMode === 'third' || !['dot','standard','none','cross'].includes(style)) return;
+    crosshairStyle = style;
+    localStorage.setItem('tanki_crosshair_style', style);
+    refreshCameraOptions();
+}
 function saveMainSettings() {
     preferredTank = document.getElementById('pref-tank').value;
     localStorage.setItem('tanki_preferred_tank', preferredTank);
@@ -732,6 +804,7 @@ function openRoomSettings() {
     document.getElementById('settings-room-options').classList.remove('context-hidden');
     document.getElementById('stg-pdata').classList.toggle('hidden', !(isAdmin || isSuperAdmin));
     refreshBulletColorOptions();
+    refreshCameraOptions();
     document.getElementById('modal-settings').classList.remove('hidden');
 }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -838,158 +911,212 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 const enemies = {};
 let myTank = null;
 
-// Игровые объекты карты (хитбоксы, разрушаемые объекты, кусты)
-let staticColliders = []; // Здания, гаражи, барьеры
-let breakables = [];      // Деревья
-let bushes = [];          // Кусты
+// Игровые объекты карты (хитбоксы, разрушаемые объекты, кусты и облака)
+let staticColliders = [];
+let breakables = [];
+let bushes = [];
+let mapRoot = null;
+let cloudSprites = [];
+let cinematicFlightHeld = false;
+function isCinematicYoo() { return String(roomKey || '').trim().toUpperCase() === 'RUN YOO' && String(myData.name || '').trim().toUpperCase() === 'CINEMATIC YOO'; }
+const CLOUD_URLS = [
+    'https://raw.githubusercontent.com/trank-pixel/tanki/refs/heads/main/assets/textures/clouds/cloud.png',
+    'https://raw.githubusercontent.com/trank-pixel/tanki/refs/heads/main/assets/textures/clouds/cloud2.png',
+    'https://raw.githubusercontent.com/trank-pixel/tanki/refs/heads/main/assets/textures/clouds/cloud3.png',
+    'https://raw.githubusercontent.com/trank-pixel/tanki/refs/heads/main/assets/textures/clouds/cloud4.png',
+    'https://raw.githubusercontent.com/trank-pixel/tanki/refs/heads/main/assets/textures/clouds/cloud5.png',
+    'https://raw.githubusercontent.com/trank-pixel/tanki/refs/heads/main/assets/textures/clouds/cloud6.png'
+];
+const cloudTextureLoader = new THREE.TextureLoader();
+function makeFallbackCloudTexture() {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    [[70,68,42],[105,48,37],[145,63,45],[184,72,30],[119,80,43]].forEach(([x,y,r]) => { ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); });
+    const texture = new THREE.CanvasTexture(canvas); texture.needsUpdate = true; return texture;
+}
+const cloudFallbackTexture = makeFallbackCloudTexture();
+const cloudTextures = CLOUD_URLS.map(url => cloudTextureLoader.load(url, undefined, undefined, () => {
+    const index = CLOUD_URLS.indexOf(url);
+    if (index >= 0) {
+        cloudTextures[index] = cloudFallbackTexture;
+        cloudSprites.forEach(cloud => { if (cloud.textureIndex === index) { cloud.sprite.material.map = cloudFallbackTexture; cloud.sprite.material.needsUpdate = true; } });
+    }
+}));
 
 function buildMap() {
-    // Очистка старой карты при пересъезде
-    staticColliders.forEach(c => scene.remove(c.mesh));
-    breakables.forEach(b => scene.remove(b.mesh));
-    bushes.forEach(b => scene.remove(b.mesh));
-    staticColliders = []; breakables = []; bushes = [];
+    // Каждая битва получает новую карту; удаляем целиком предыдущую карту.
+    if (mapRoot) scene.remove(mapRoot);
+    mapRoot = new THREE.Group();
+    scene.add(mapRoot);
+    staticColliders = [];
+    breakables = [];
+    bushes = [];
+    cloudSprites = [];
 
-    // 1. Мрачное освещение и туман (Скайбокс)
-    scene.background = new THREE.Color(0x0a0d12);
-    scene.fog = new THREE.FogExp2(0x0a0d12, 0.012);
+    scene.background = new THREE.Color(0x111722);
+    scene.fog = new THREE.FogExp2(0x111722, 0.009);
+    mapRoot.add(new THREE.DirectionalLight(0x91a6c7, 0.95));
+    mapRoot.children[mapRoot.children.length - 1].position.set(50, 100, 50);
+    mapRoot.add(new THREE.AmbientLight(0x354052, 0.82));
 
-    const light = new THREE.DirectionalLight(0x7788aa, 0.8);
-    light.position.set(50, 100, 50);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0x222833, 0.7));
-
-    // 2. Земля и Дорожки
-    const groundGeo = new THREE.PlaneGeometry(300, 300);
-    const groundMat = new THREE.MeshLambertMaterial({ color: 0x1c211a });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
+    // Земля и дороги
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(380, 380), new THREE.MeshLambertMaterial({color:0x252b21}));
     ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
+    mapRoot.add(ground);
+    const roadMat = new THREE.MeshLambertMaterial({color:0x191c19});
+    const mainRoad = new THREE.Mesh(new THREE.PlaneGeometry(380, 14), roadMat);
+    mainRoad.rotation.x = -Math.PI / 2; mainRoad.position.y = 0.01; mapRoot.add(mainRoad);
+    const crossRoad = new THREE.Mesh(new THREE.PlaneGeometry(14, 380), roadMat);
+    crossRoad.rotation.x = -Math.PI / 2; crossRoad.position.y = 0.012; mapRoot.add(crossRoad);
 
-    // Дорожки
-    const roadMat = new THREE.MeshLambertMaterial({ color: 0x111311 });
-    const mainRoad = new THREE.Mesh(new THREE.PlaneGeometry(300, 12), roadMat);
-    mainRoad.rotation.x = -Math.PI / 2;
-    mainRoad.position.y = 0.01;
-    scene.add(mainRoad);
-
-    const crossRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 300), roadMat);
-    crossRoad.rotation.x = -Math.PI / 2;
-    crossRoad.position.y = 0.01;
-    scene.add(crossRoad);
-
-    // 3. Барьер по краям карты (Стены)
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x050505, transparent: true, opacity: 0.5 });
-    const addWall = (x, z, w, d) => {
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 20, d), wallMat);
-        wall.position.set(x, 10, z);
-        scene.add(wall);
-        staticColliders.push({ box: new THREE.Box3().setFromObject(wall), mesh: wall });
+    // Слабосветящаяся синяя полоса по внутреннему краю карты.
+    const edgeMat = new THREE.MeshStandardMaterial({color:0x087dff, emissive:0x087dff, emissiveIntensity:0.55, transparent:true, opacity:0.72});
+    const edgeGlowMat = new THREE.MeshBasicMaterial({color:0x168cff, transparent:true, opacity:0.13, side:THREE.DoubleSide});
+    const addEdge = (x,z,w,d,rot=0) => {
+        const line = new THREE.Mesh(new THREE.BoxGeometry(w,0.12,d), edgeMat);
+        line.position.set(x,0.08,z); line.rotation.y=rot; mapRoot.add(line);
+        const glow = new THREE.Mesh(new THREE.BoxGeometry(w,0.35,d*2.4), edgeGlowMat);
+        glow.position.set(x,0.06,z); glow.rotation.y=rot; mapRoot.add(glow);
     };
-    addWall(0, -150, 300, 4);
-    addWall(0, 150, 300, 4);
-    addWall(-150, 0, 4, 300);
-    addWall(150, 0, 4, 300);
+    addEdge(0,-187,374,0.24); addEdge(0,187,374,0.24);
+    addEdge(-187,0,374,0.24,Math.PI/2); addEdge(187,0,374,0.24,Math.PI/2);
 
-    // 4. Большие Дома (Прочные укрытия)
-    const buildingMat = new THREE.MeshLambertMaterial({ color: 0x2b3038 });
-    const addBuilding = (x, z, w, h, d) => {
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), buildingMat);
-        mesh.position.set(x, h / 2, z);
-        scene.add(mesh);
-        staticColliders.push({ box: new THREE.Box3().setFromObject(mesh), mesh: mesh });
+    // Периметр карты: стены с хитбоксами.
+    const wallMat = new THREE.MeshLambertMaterial({color:0x050505, transparent:true, opacity:0.5});
+    const addWall = (x,z,w,d) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w,20,d), wallMat);
+        wall.position.set(x,10,z); mapRoot.add(wall);
+        staticColliders.push({box:new THREE.Box3().setFromObject(wall), mesh:wall});
     };
+    addWall(0,-190,380,4); addWall(0,190,380,4); addWall(-190,0,4,380); addWall(190,0,4,380);
 
-    addBuilding(-40, -40, 20, 15, 30);
-    addBuilding(40, -40, 20, 15, 30);
-    addBuilding(-40, 40, 25, 20, 25);
-    addBuilding(40, 40, 25, 20, 25);
-
-    // 5. Гаражи (Прижатые к земле)
-    const garageMat = new THREE.MeshLambertMaterial({ color: 0x3d271d });
-    const addGarage = (x, z, r = 0) => {
-        const group = new THREE.Group();
-        const base = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 10), garageMat);
-        base.position.y = 2;
-        group.add(base);
-        group.position.set(x, 0, z);
-        group.rotation.y = r;
-        scene.add(group);
-        staticColliders.push({ box: new THREE.Box3().setFromObject(group), mesh: group });
-    };
-
-    for(let i = 0; i < 4; i++) {
-        addGarage(-80 + i * 9, -15, 0);
-        addGarage(50 + i * 9, 15, Math.PI);
+    // Генератор не разрешает пересечения объектов и сохраняет чистые зоны спавна.
+    const occupied = [
+        {x:-80,z:0,r:18,kind:'spawn'}, {x:80,z:0,r:18,kind:'spawn'}
+    ];
+    function canPlace(x,z,r,kind) {
+        if (x-r < -178 || x+r > 178 || z-r < -178 || z+r > 178) return false;
+        // Перекрёсток и главная дорога остаются свободными для движения.
+        if (kind !== 'lantern' && (Math.abs(x) < 10+r*0.35 || Math.abs(z) < 10+r*0.35)) return false;
+        for (const o of occupied) {
+            const gap = (o.kind === 'spawn' || kind === 'building' || o.kind === 'building') ? 3 : 1.5;
+            if (Math.hypot(x-o.x,z-o.z) < r+o.r+gap) return false;
+        }
+        return true;
+    }
+    function reserve(x,z,r,kind) { occupied.push({x,z,r,kind}); }
+    function randomPlacement(r,kind,attempts=100) {
+        for(let i=0;i<attempts;i++) {
+            const x=-164+Math.random()*328, z=-164+Math.random()*328;
+            if(canPlace(x,z,r,kind)) { reserve(x,z,r,kind); return {x,z}; }
+        }
+        return null;
     }
 
-    // 6. Разрушаемые Деревья
-    const treeTrunkMat = new THREE.MeshLambertMaterial({ color: 0x24170d });
-    const treeLeavesMat = new THREE.MeshLambertMaterial({ color: 0x0f2413 });
-    const addTree = (x, z) => {
-        const group = new THREE.Group();
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 5), treeTrunkMat);
-        trunk.position.y = 2.5;
-        const leaves = new THREE.Mesh(new THREE.ConeGeometry(3, 7, 6), treeLeavesMat);
-        leaves.position.y = 6;
-        group.add(trunk, leaves);
-        group.position.set(x, 0, z);
-        scene.add(group);
-
-        breakables.push({ 
-            mesh: group, 
-            box: new THREE.Box3().setFromObject(group), 
-            x: x, z: z, 
-            broken: false 
-        });
-    };
-
-    // Лесополосы
-    for(let i = 0; i < 15; i++) {
-        addTree(-100 + Math.random()*50, -60 + Math.random()*120);
-        addTree(50 + Math.random()*50, -60 + Math.random()*120);
+    // Дома случайно распределяются по карте, до создания остальных объектов.
+    const buildingMat = new THREE.MeshLambertMaterial({color:0x2b3038});
+    const buildingCount = 5 + Math.floor(Math.random()*3);
+    for(let i=0;i<buildingCount;i++) {
+        const w = 14 + Math.random()*12, d = 14 + Math.random()*15, h = 10 + Math.random()*12;
+        const r = Math.max(w,d)*0.72;
+        const pos = randomPlacement(r,'building',180);
+        if(!pos) continue;
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),buildingMat);
+        mesh.position.set(pos.x,h/2,pos.z);
+        mapRoot.add(mesh);
+        staticColliders.push({box:new THREE.Box3(new THREE.Vector3(pos.x-w/2,0,pos.z-d/2),new THREE.Vector3(pos.x+w/2,h,pos.z+d/2)),mesh,kind:'building'});
     }
 
-    // 7. Фонари (разрушаемые; после падения свет выключается)
-    const addLantern = (x, z) => {
+    // Гаражи также проходят ту же проверку размещения.
+    const garageMat = new THREE.MeshLambertMaterial({color:0x3d271d});
+    const garageCount = 5 + Math.floor(Math.random()*4);
+    for(let i=0;i<garageCount;i++) {
+        const pos = randomPlacement(7,'garage',120);
+        if(!pos) continue;
         const group = new THREE.Group();
-        const poleMat = new THREE.MeshLambertMaterial({ color: 0x343a3e });
-        const shadeMat = new THREE.MeshLambertMaterial({ color: 0x252a2d });
-        const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe6a1 });
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 6, 8), poleMat);
-        pole.position.y = 3;
-        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 0.16), poleMat);
-        arm.position.set(0.55, 5.7, 0);
-        const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.8, 0.35, 8), shadeMat);
-        shade.position.set(1.05, 5.45, 0);
-        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), bulbMat);
-        bulb.position.set(1.05, 5.1, 0);
-        const pointLight = new THREE.PointLight(0xffd987, 1.8, 24, 2);
-        pointLight.position.set(1.05, 5.05, 0);
-        group.add(pole, arm, shade, bulb, pointLight);
-        group.position.set(x, 0, z);
-        scene.add(group);
-        const box = new THREE.Box3().setFromObject(group);
-        breakables.push({ type: 'lantern', mesh: group, box, x, z, broken: false, light: pointLight, bulbMaterial: bulbMat });
-    };
-    // Фонари вдоль дорог и вокруг зданий
-    [[-70,-32],[-45,-8],[-15,-32],[15,32],[45,8],[70,32],[-70,32],[70,-32],[-10,58],[10,-58]].forEach(([x,z]) => addLantern(x,z));
+        const base = new THREE.Mesh(new THREE.BoxGeometry(7,4,10),garageMat);
+        base.position.y=2; group.add(base);
+        group.position.set(pos.x,0,pos.z);
+        group.rotation.y = Math.random()*Math.PI*2;
+        mapRoot.add(group);
+        staticColliders.push({box:new THREE.Box3().setFromObject(group),mesh:group});
+    }
 
-    // 8. Кусты (Зоны маскировки)
-    const bushMat = new THREE.MeshLambertMaterial({ color: 0x142b11, transparent: true, opacity: 0.85 });
-    const addBush = (x, z) => {
-        const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(3.5), bushMat);
-        mesh.position.set(x, 1, z);
-        mesh.scale.set(1.2, 0.5, 1.2);
-        scene.add(mesh);
-        bushes.push({ x: x, z: z, r: 3.5 });
-    };
+    // Деревья — разрушаемые; их позиции не пересекаются с домами и другими объектами.
+    const treeTrunkMat = new THREE.MeshLambertMaterial({color:0x24170d});
+    const treeLeavesMat = new THREE.MeshLambertMaterial({color:0x0f2413});
+    const treeCount = 26 + Math.floor(Math.random()*13);
+    for(let i=0;i<treeCount;i++) {
+        const pos = randomPlacement(4.7,'tree',100);
+        if(!pos) continue;
+        const group = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,5),treeTrunkMat);
+        trunk.position.y=2.5;
+        const leaves = new THREE.Mesh(new THREE.ConeGeometry(3,7,6),treeLeavesMat);
+        leaves.position.y=6; group.add(trunk,leaves);
+        group.position.set(pos.x,0,pos.z); mapRoot.add(group);
+        breakables.push({type:'tree',mesh:group,box:new THREE.Box3().setFromObject(group),x:pos.x,z:pos.z,broken:false});
+    }
 
-    addBush(-20, -15); addBush(-25, -20);
-    addBush(20, 15); addBush(25, 20);
-    addBush(0, -60); addBush(0, 60);
+    // Фонари случайно появляются возле дорожек; при падении лампа гаснет.
+    const addLantern = (x,z) => {
+        const group = new THREE.Group();
+        const poleMat = new THREE.MeshLambertMaterial({color:0x343a3e});
+        const shadeMat = new THREE.MeshLambertMaterial({color:0x252a2d});
+        const bulbMat = new THREE.MeshBasicMaterial({color:0xffe6a1});
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.25,6,8),poleMat); pole.position.y=3;
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5,0.16,0.16),poleMat); arm.position.set(0.55,5.7,0);
+        const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.65,0.8,0.35,8),shadeMat); shade.position.set(1.05,5.45,0);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.35,10,8),bulbMat); bulb.position.set(1.05,5.1,0);
+        const pointLight = new THREE.PointLight(0xffd987,3.4,38,1.6); pointLight.position.set(1.05,5.05,0);
+        group.add(pole,arm,shade,bulb,pointLight); group.position.set(x,0,z);
+        group.rotation.y=Math.random()*Math.PI*2; mapRoot.add(group);
+        breakables.push({type:'lantern',mesh:group,box:new THREE.Box3().setFromObject(group),x,z,broken:false,light:pointLight,bulbMaterial:bulbMat});
+    };
+    let lanternsAdded=0;
+    for(let i=0;i<45 && lanternsAdded<10;i++) {
+        // Размещаем часть фонарей рядом с дорогами, но не в центральном перекрёстке.
+        const alongX = Math.random()<0.5;
+        const x = alongX ? -125+Math.random()*250 : (Math.random()<0.5?-1:1)*(14+Math.random()*105);
+        const z = alongX ? (Math.random()<0.5?-1:1)*(9+Math.random()*5) : -125+Math.random()*250;
+        if(canPlace(x,z,2.5,'lantern')) { reserve(x,z,2.5,'lantern'); addLantern(x,z); lanternsAdded++; }
+    }
+
+    // Кусты — отдельные зоны маскировки, не пересекающиеся с домами и деревьями.
+    const bushMat = new THREE.MeshLambertMaterial({color:0x142b11,transparent:true,opacity:0.85});
+    const bushCount = 24 + Math.floor(Math.random()*13);
+    for(let i=0;i<bushCount;i++) {
+        const pos = randomPlacement(4.5,'bush',100);
+        if(!pos) continue;
+        const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(3.5),bushMat);
+        mesh.position.set(pos.x,1,pos.z); mesh.scale.set(1.2,0.5,1.2); mapRoot.add(mesh);
+        bushes.push({x:pos.x,z:pos.z,r:3.5,mesh});
+    }
+
+    // Облака в небе: 18–24 одновременно. Все шесть текстур задействованы минимум по одному разу
+    // при каждой генерации карты; остальные облака получают случайные текстуры.
+    // Расстановка учитывает размер спрайтов, чтобы облака не накладывались друг на друга.
+    const cloudCount = 18 + Math.floor(Math.random()*7);
+    const cloudMaterial = (textureIndex) => new THREE.SpriteMaterial({map:cloudTextures[textureIndex],transparent:true,opacity:0.84,depthWrite:false,color:0xffffff});
+    for(let i=0;i<cloudCount;i++) {
+        let pos=null;
+        const scale=27+Math.random()*12;
+        const minSpacing=42 + scale*0.42;
+        for(let tries=0;tries<180 && !pos;tries++) {
+            const x=-170+Math.random()*340, z=-170+Math.random()*340;
+            if(cloudSprites.every(c=>Math.hypot(c.sprite.position.x-x,c.sprite.position.z-z)>(minSpacing + c.sprite.scale.x*0.25))) pos={x,z};
+        }
+        if(!pos) continue;
+        // Гарантируем, что все виды облаков присутствуют хотя бы по одному разу.
+        const texIndex = i < CLOUD_URLS.length ? i : Math.floor(Math.random()*cloudTextures.length);
+        const sprite=new THREE.Sprite(cloudMaterial(texIndex));
+        sprite.scale.set(scale,scale*0.58,1);
+        sprite.position.set(pos.x,24+Math.random()*12,pos.z);
+        mapRoot.add(sprite);
+        cloudSprites.push({sprite,textureIndex:texIndex,vx:(Math.random()*0.055+0.025)*(Math.random()<0.5?-1:1),vz:(Math.random()-0.5)*0.025,nextChange:performance.now()+16000+Math.random()*22000});
+    }
 }
-
 
 function breakMapObject(obj) {
     if (!obj || obj.broken) return;
@@ -1085,7 +1212,7 @@ function startBattle() {
                 enemies[id] = createTank(p.team === myData.team ? 0x4E6343 : 0x424940, p.name, p.tank, p.skinColor, isEnemySuper);
                 scene.add(enemies[id].group);
             }
-            enemies[id].group.position.set(p.x || 0, 0, p.z || 0);
+            enemies[id].group.position.set(p.x || 0, p.y || 0, p.z || 0);
             enemies[id].group.rotation.y = p.r || 0;
             enemies[id].label.innerText = `${p.name} (${p.tank})`;
             enemies[id].hp = p.godMode ? 228 : p.hp;
@@ -1244,8 +1371,10 @@ function createTank(color, name, tank, skinColor = "normal", isLongGun = false) 
     return { group: g, label: l, materials: [mat], name: name, tankModel: tank, skinColor: skinColor };
 }
 
-document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
-    e.preventDefault(); if((myData.hp <= 0 && !myData.godMode) || isDead || !myTank) return;
+document.getElementById('fire-btn').addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (isCinematicYoo()) cinematicFlightHeld = true;
+    if((myData.hp <= 0 && !myData.godMode) || isDead || !myTank) return;
     // Выстрел снимает маскировку в кустах.
     if (myData.inBush) {
         myData.inBush = false;
@@ -1333,6 +1462,11 @@ nipplejs.create({ zone: document.getElementById('joy-zone'), mode: 'static', pos
 
 const remoteBullets = {};
 let remoteBulletsListenerRoom = null;
+const fireButton = document.getElementById('fire-btn');
+['pointerup','pointercancel','lostpointercapture'].forEach(eventName => fireButton.addEventListener(eventName, () => { cinematicFlightHeld = false; }));
+window.addEventListener('pointerup', () => { cinematicFlightHeld = false; });
+window.addEventListener('blur', () => { cinematicFlightHeld = false; });
+
 function attachRemoteBulletListener() {
     if (!roomKey || remoteBulletsListenerRoom === roomKey) return;
     remoteBulletsListenerRoom = roomKey;
@@ -1343,8 +1477,8 @@ function attachRemoteBulletListener() {
         const mat = new THREE.MeshBasicMaterial({color: data.color || '#FFFF00'});
         const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.3), mat);
         mesh.position.set(data.x || 0, data.y || 1, data.z || 0);
-        scene.add(mesh);
         const dir = new THREE.Vector3(data.dx || 0, data.dy || 0, data.dz || 1);
+        scene.add(mesh);
         const state = {mesh, mat, dir, shooterName: data.shooterName || '', alive: true};
         remoteBullets[id] = state;
         const bulletRef = db.ref(`rooms/${roomKey}/bullets/${id}`);
@@ -1434,19 +1568,27 @@ function animate() {
         let rotSpeedMultiplier = myData.rotSpeed || 1;
         myTank.group.rotation.y += move.r * (0.06 * rotSpeedMultiplier);
 
-        // Сохраняем позицию до движения, чтобы вернуть танк при столкновении.
+        // CINEMATIC YOO в комнате RUN YOO: свободный полёт и отключение коллизий.
+        const cinematicMode = isCinematicYoo();
         const oldPos = myTank.group.position.clone();
         myTank.group.translateZ(move.f * myData.speed);
-        const tankBox = new THREE.Box3().setFromObject(myTank.group);
-        let collided = false;
-        for (const col of staticColliders) {
-            if (col.box.intersectsBox(tankBox)) { collided = true; break; }
+        if (cinematicMode) {
+            if (cinematicFlightHeld) myTank.group.position.y = Math.min(180, myTank.group.position.y + 0.32);
+            else myTank.group.position.y = Math.max(0, myTank.group.position.y - 0.22);
+        } else {
+            myTank.group.position.y = 0;
+            const tankBox = new THREE.Box3().setFromObject(myTank.group);
+            let collided = false;
+            for (const col of staticColliders) {
+                // Считаем только горизонтальное пересечение, чтобы верхние части модели не цеплялись за стены.
+                if (col.box.intersectsBox(tankBox)) { collided = true; break; }
+            }
+            // Деревья и фонари имеют хитбоксы и падают при таране.
+            for (const obj of breakables) {
+                if (!obj.broken && tankBox.intersectsBox(obj.box)) breakMapObject(obj);
+            }
+            if (collided) myTank.group.position.copy(oldPos);
         }
-        // Деревья и фонари имеют хитбоксы и падают при таране.
-        for (const obj of breakables) {
-            if (!obj.broken && tankBox.intersectsBox(obj.box)) breakMapObject(obj);
-        }
-        if (collided) myTank.group.position.copy(oldPos);
 
         // Кусты маскируют танк и передают состояние другим игрокам.
         let currentlyInBush = false;
@@ -1462,7 +1604,7 @@ function animate() {
             db.ref(`rooms/${roomKey}/players/${myId}/inBush`).set(currentlyInBush);
         }
 
-        db.ref(`rooms/${roomKey}/players/${myId}`).update({ x: myTank.group.position.x, z: myTank.group.position.z, r: myTank.group.rotation.y });
+        db.ref(`rooms/${roomKey}/players/${myId}`).update({ x: myTank.group.position.x, y: myTank.group.position.y, z: myTank.group.position.z, r: myTank.group.rotation.y });
     }
 
     allTanks.forEach(t => {
@@ -1473,9 +1615,44 @@ function animate() {
     });
 
     if(myTank) {
-        camera.position.lerp(new THREE.Vector3(myTank.group.position.x - Math.sin(myTank.group.rotation.y)*20, 14, myTank.group.position.z - Math.cos(myTank.group.rotation.y)*20), 0.1);
-        camera.lookAt(myTank.group.position);
+        if (cameraMode === 'first') {
+            const yaw = myTank.group.rotation.y;
+            const targetPos = new THREE.Vector3(myTank.group.position.x + Math.sin(yaw) * 1.15, myTank.group.position.y + 2.25, myTank.group.position.z + Math.cos(yaw) * 1.15);
+            camera.position.lerp(targetPos, 0.28);
+            camera.lookAt(new THREE.Vector3(myTank.group.position.x + Math.sin(yaw) * 24, myTank.group.position.y + 2.0, myTank.group.position.z + Math.cos(yaw) * 24));
+        } else if (cameraMode === 'top') {
+            camera.position.lerp(new THREE.Vector3(myTank.group.position.x, myTank.group.position.y + 48, myTank.group.position.z + 0.01), 0.16);
+            camera.lookAt(new THREE.Vector3(myTank.group.position.x, myTank.group.position.y, myTank.group.position.z));
+        } else {
+            camera.position.lerp(new THREE.Vector3(myTank.group.position.x - Math.sin(myTank.group.rotation.y)*20, 14, myTank.group.position.z - Math.cos(myTank.group.rotation.y)*20), 0.1);
+            camera.lookAt(myTank.group.position);
+        }
     }
+    // Облака медленно плывут; при сближении траектория блокируется, чтобы они не накладывались.
+    const now = performance.now();
+    cloudSprites.forEach((cloud, index) => {
+        if (now >= cloud.nextChange) {
+            let next = Math.floor(Math.random()*cloudTextures.length);
+            if (cloudTextures.length > 1 && next === cloud.textureIndex) next = (next + 1) % cloudTextures.length;
+            cloud.textureIndex = next;
+            cloud.sprite.material.map = cloudTextures[next];
+            cloud.sprite.material.needsUpdate = true;
+            cloud.nextChange = now + 14000 + Math.random()*18000;
+        }
+        const nx = cloud.sprite.position.x + cloud.vx;
+        const nz = cloud.sprite.position.z + cloud.vz;
+        const tooClose = cloudSprites.some((other, j) => j !== index && Math.hypot(other.sprite.position.x-nx, other.sprite.position.z-nz) < (cloud.sprite.scale.x + other.sprite.scale.x) * 0.55);
+        if (tooClose) {
+            cloud.vx *= -1;
+            cloud.vz = (Math.random()-0.5)*0.035;
+        } else {
+            cloud.sprite.position.x = nx;
+            cloud.sprite.position.z = nz;
+        }
+        if (Math.abs(cloud.sprite.position.x) > 170) cloud.vx *= -1;
+        if (Math.abs(cloud.sprite.position.z) > 170) cloud.vz *= -1;
+    });
+
     renderer.render(scene, camera);
 }
 
